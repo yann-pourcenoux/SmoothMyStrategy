@@ -6,4 +6,5 @@ RUN apt update -y
 RUN apt install -y git
 
 # Install the package
+COPY setup.py .
 RUN pip install -e .
