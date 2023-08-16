@@ -10,6 +10,8 @@ STYLE_PKGS = [
     "ruff~=0.0.280",
 ]
 
+TEST_PKGS = ["pytest~=7.4.0"]
+
 
 setup(
     name="Finance",
@@ -18,5 +20,5 @@ setup(
     author="Yann POURCENOUX",
     author_email="yann.pourcenoux@gmail.com",
     url="https://gitlab.com/yannpourcenoux/Finance",
-    install_requires=STYLE_PKGS,
+    install_requires=STYLE_PKGS + TEST_PKGS,
 )

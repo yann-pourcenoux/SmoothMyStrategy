@@ -1,17 +1,25 @@
+import logging
 import subprocess
 
 
 def main():
     return_codes = {
-        "black": subprocess.run("black --check ."),
-        "isort": subprocess.run("isort --check ."),
-        "ruff": subprocess.run("ruff ."),
-        "mypy": subprocess.run("mypy ."),
-        "docformatter": subprocess.run("docformatter --black --check -r ."),
+        "black": subprocess.run("black --check src", shell=True).returncode,
+        "isort": subprocess.run("isort --check src", shell=True).returncode,
+        "ruff": subprocess.run("ruff src", shell=True).returncode,
+        "mypy": subprocess.run("mypy src", shell=True).returncode,
+        "docformatter": subprocess.run(
+            "docformatter --black --check -r src", shell=True
+        ).returncode,
     }
 
     for name, code in return_codes.items():
-        print(f"{name}: {code}")
+        logging.info(f"{name}: {code}")
 
     if sum(return_codes.values()) != 0:
         raise ValueError("Some errors happened.")
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    main()
