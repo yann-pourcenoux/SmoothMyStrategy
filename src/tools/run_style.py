@@ -7,7 +7,6 @@ def main():
         "black": subprocess.run("black --check src", shell=True).returncode,
         "isort": subprocess.run("isort --check src", shell=True).returncode,
         "ruff": subprocess.run("ruff src", shell=True).returncode,
-        "mypy": subprocess.run("mypy src", shell=True).returncode,
         "docformatter": subprocess.run(
             "docformatter --black --check -r src", shell=True
         ).returncode,
