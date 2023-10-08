@@ -1,11 +1,14 @@
 """Data Loader module."""
 
+import logging
 import os
 from dataclasses import dataclass
 
 import pandas as pd
 
 from data.constants import FINANCE_DATA_PATH
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
@@ -40,7 +43,12 @@ class DataLoader:
         data = {}
         for ticker in self._config.tickers:
             data[ticker] = pd.read_csv(
-                os.path.join(FINANCE_DATA_PATH, f"{ticker}.csv"), index_col="Date"
+                os.path.join(FINANCE_DATA_PATH, f"{ticker}.csv"),
+                index_col="Date",
+                date_format="%Y-%m-%d",
+            )
+            data[ticker].index = data[ticker].index.map(
+                lambda x: pd.to_datetime(x).date()
             )
         return data
 
@@ -52,6 +60,8 @@ class DataLoader:
         start: str | None = None,
         end: str | None = None,
         resampling_frequency: str | None = None,
+        fillna: bool = True,
+        dropna: bool = False,
     ) -> pd.DataFrame:
         """Get dataframe of loaded data.
 
@@ -62,20 +72,48 @@ class DataLoader:
             end (str | None, optional): max date of dataframe. Defaults to None.
             resampling_frequency (str | None, optional): resampling frequency of
                 dataframe. Defaults to None.
+            fillna (bool, optional): whether to fill NaN values. Defaults to True.
+            dropna (bool, optional): whether to drop columns that have NaN values.
+                Defaults to False.
 
         Returns:
             pd.DataFrame: dataframe of loaded data for a ticker.
         """
+        if dropna and not fillna:
+            LOGGER.warning("It is risky to drop NaN values without filling them.")
+
         dataframe = select_tickers_columns(self._dataframes, tickers, columns)
 
         dataframe = select_time_range(dataframe, start, end)
 
-        dataframe = fill_nan(dataframe)
+        if fillna:
+            dataframe = fill_nan(dataframe)
+            columns_with_nan = _get_columns_with_nan(dataframe)
+            LOGGER.warning(
+                'Could not fill NaN values for columns: "%s"', columns_with_nan
+            )
+
+        if dropna:
+            columns_with_nan = _get_columns_with_nan(dataframe)
+            LOGGER.info('Dropping columns: "%s"', columns_with_nan)
+            dataframe.dropna(axis=1, inplace=True)
 
         if resampling_frequency is not None:
             dataframe = dataframe.resample(resampling_frequency).last()
 
         return dataframe
+
+
+def _get_columns_with_nan(dataframe: pd.DataFrame) -> list[str]:
+    """Get columns with NaN values.
+
+    Args:
+        dataframe (pd.DataFrame): dataframe to get columns with NaN values for.
+
+    Returns:
+        list[str]: list of columns with NaN values.
+    """
+    return dataframe.columns[dataframe.isna().any()].tolist()
 
 
 def select_tickers_columns(
@@ -123,10 +161,10 @@ def select_time_range(
         pd.DataFrame: dataframe with selected time range.
     """
     if start is not None:
-        dataframe = dataframe[dataframe.index >= start]
+        dataframe = dataframe[dataframe.index >= pd.to_datetime(start).date()]
 
     if end is not None:
-        dataframe = dataframe[dataframe.index <= end]
+        dataframe = dataframe[dataframe.index <= pd.to_datetime(end).date()]
 
     return dataframe
 
@@ -141,8 +179,8 @@ def fill_nan(dataframe: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: dataframe with filled NaN values.
     """
     # Fill the "holes" with the last known value
-    dataframe.fillna(method="ffill", inplace=True)
+    dataframe.ffill(inplace=True)
     # If there are remaining NaN values, there are at the beginning,
     # fill with next known value
-    dataframe.fillna(method="bfill", inplace=True)
+    dataframe.bfill(inplace=True)
     return dataframe
