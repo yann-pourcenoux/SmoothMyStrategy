@@ -16,6 +16,7 @@ DS_PKGS = [
     "pandas~=2.1.0",
     "yfinance~=0.2.28",
     "statsmodels~=0.14.0",
+    "trendln~=0.1.10",
 ]
 ML_PKGS = [
     "xgboost~=2.0.0",
