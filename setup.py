@@ -11,6 +11,7 @@ STYLE_PKGS = [
 UTILS_PKGS = [
     "GitPython~=3.1.35",
     "jupyter~=1.0.0",
+    "pydantic~=2.5.2",
 ]
 DS_PKGS = [
     "pandas~=2.1.0",

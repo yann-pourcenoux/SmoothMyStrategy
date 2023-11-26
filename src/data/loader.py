@@ -2,9 +2,9 @@
 
 import logging
 import os
-from dataclasses import dataclass
 
 import pandas as pd
+from pydantic.dataclasses import dataclass
 
 from data.constants import FINANCE_DATA_PATH
 
@@ -42,14 +42,17 @@ class DataLoader:
         """
         data = {}
         for ticker in self._config.tickers:
-            data[ticker] = pd.read_csv(
-                os.path.join(FINANCE_DATA_PATH, f"{ticker}.csv"),
-                index_col="Date",
-                date_format="%Y-%m-%d",
-            )
-            data[ticker].index = data[ticker].index.map(
-                lambda x: pd.to_datetime(x).date()
-            )
+            data[ticker] = pd.read_csv(os.path.join(FINANCE_DATA_PATH, f"{ticker}.csv"))
+
+            _rename_columns(data[ticker])
+            _convert_to_date(data[ticker])
+            _add_day_of_week(data[ticker])
+
+            data[ticker]["ticker"] = ticker
+
+            data[ticker].dropna(inplace=True)
+            data[ticker].reset_index(drop=True, inplace=True)
+
         return data
 
     def get_dataframe(
@@ -59,7 +62,6 @@ class DataLoader:
         *,
         start: str | None = None,
         end: str | None = None,
-        resampling_frequency: str | None = None,
         fillna: bool = True,
         dropna: bool = False,
     ) -> pd.DataFrame:
@@ -70,8 +72,6 @@ class DataLoader:
             columns (str | (list[str]): column(s) to get dataframe for.
             start (str | None, optional): start date of dataframe. Defaults to None.
             end (str | None, optional): max date of dataframe. Defaults to None.
-            resampling_frequency (str | None, optional): resampling frequency of
-                dataframe. Defaults to None.
             fillna (bool, optional): whether to fill NaN values. Defaults to True.
             dropna (bool, optional): whether to drop columns that have NaN values.
                 Defaults to False.
@@ -97,11 +97,50 @@ class DataLoader:
             columns_with_nan = _get_columns_with_nan(dataframe)
             LOGGER.info('Dropping columns: "%s"', columns_with_nan)
             dataframe.dropna(axis=1, inplace=True)
+            dataframe.reset_index(inplace=True, drop=True)
 
-        if resampling_frequency is not None:
-            dataframe = dataframe.resample(resampling_frequency).last()
+        dataframe.sort_values(by=["date", "ticker"], inplace=True)
+        dataframe.reset_index(drop=True, inplace=True)
 
         return dataframe
+
+
+def _add_day_of_week(dataframe: pd.DataFrame) -> None:
+    """Add "day" column to dataframe inplace.
+
+    Args:
+        dataframe (pd.DataFrame): dataframe to add "day" column for.
+    """
+    dataframe["day"] = dataframe.date.map(lambda x: x.weekday())
+
+
+def _convert_to_date(dataframe: pd.DataFrame) -> None:
+    """Convert "Date" column of dataframe to datetime format inplace.
+
+    Args:
+        dataframe (pd.DataFrame): dataframe to convert "Date" column for.
+    """
+    dataframe["date"] = dataframe.Date.map(lambda x: pd.to_datetime(x).date())
+    dataframe.drop(columns=["Date"], inplace=True)
+
+
+def _rename_columns(dataframe: pd.DataFrame) -> None:
+    """Rename columns of dataframe inplace.
+
+    Args:
+        dataframe (pd.DataFrame): dataframe to rename columns for.
+    """
+    dataframe.rename(
+        columns={
+            "Open": "open",
+            "High": "high",
+            "Low": "low",
+            "Close": "close",
+            "Adj Close": "adj_close",
+            "Volume": "volume",
+        },
+        inplace=True,
+    )
 
 
 def _get_columns_with_nan(dataframe: pd.DataFrame) -> list[str]:
@@ -140,9 +179,13 @@ def select_tickers_columns(
     if isinstance(columns, str):
         columns = [columns]
 
-    for ticker in tickers:
-        for column in columns:
-            dataframe[f"{ticker}_{column}"] = dataframes[ticker][column]
+    columns = sorted(["date", "day", "ticker"] + columns)
+
+    def _generator():
+        for ticker in tickers:
+            yield dataframes[ticker][columns]
+
+    dataframe = pd.concat(_generator(), ignore_index=True)
 
     return dataframe
 
@@ -161,10 +204,10 @@ def select_time_range(
         pd.DataFrame: dataframe with selected time range.
     """
     if start is not None:
-        dataframe = dataframe[dataframe.index >= pd.to_datetime(start).date()]
+        dataframe = dataframe[dataframe.date >= pd.to_datetime(start).date()]
 
     if end is not None:
-        dataframe = dataframe[dataframe.index <= pd.to_datetime(end).date()]
+        dataframe = dataframe[dataframe.date <= pd.to_datetime(end).date()]
 
     return dataframe
 

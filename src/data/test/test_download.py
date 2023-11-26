@@ -30,7 +30,7 @@ class TestDownload(unittest.TestCase):
         """Test that the load_ticker_list function works."""
         filepath = os.path.join(self.directory_name, "test.json")
 
-        with open(filepath, "w") as file:
+        with open(filepath, "w", encoding="utf-8") as file:
             json.dump([self.ticker], file)
 
         tickers = data.download.load_ticker_list(filepath)
