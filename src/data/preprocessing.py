@@ -1,0 +1,129 @@
+"""Data preprocessing module."""
+
+from typing import Iterator
+
+import pandas as pd
+import pydantic
+import stockstats
+
+
+class DataPreprocessingConfig(pydantic.BaseModel):
+    """Configuration for DataPreprocessing.
+
+    Attributes:
+        technical_indicators (list[str]): list of technical indicators to use.
+    """
+
+    technical_indicators: list[str] = ["macd", "boll_30", "boll_60"]
+    start_date: str | None = None
+    end_date: str | None = None
+    # TODO: add vix and turbulence
+
+
+def preprocess_data(
+    stock_df_iterator: Iterator[stockstats.StockDataFrame],
+    config: DataPreprocessingConfig,
+) -> pd.DataFrame:
+    """Preprocess the data.
+
+    Args:
+        stock_df_iterator (Iterator[stockstats.StockDataFrame]): Iterator of
+            stockstats.StockDataFrame.
+        config (DataPreprocessingConfig): Configuration for preprocessing.
+
+    Returns:
+        pd.DataFrame: Preprocessed dataframe.
+    """
+    dataframe_iterator = _add_technical_indicators(
+        stock_df_iterator, config.technical_indicators
+    )
+
+    dataframe = merge_dataframes(dataframe_iterator)
+
+    dataframe = select_time_range(dataframe, config.start_date, config.end_date)
+    dataframe = clean_data(dataframe)
+
+    return dataframe
+
+
+def _add_technical_indicators(
+    stock_df_iterator: Iterator[stockstats.StockDataFrame],
+    technical_indicators: list[str],
+) -> Iterator[pd.DataFrame]:
+    """Add technical indicators to dataframe.
+
+    Args:
+        stock_df_iterator (Iterator[stockstats.StockDataFrame]): Iterator of
+            stockstats.StockDataFrame.
+        technical_indicators (list[str]): list of technical indicators to add.
+
+    Returns:
+        Iterator[pd.DataFrame]: Iterator of pd.DataFrame.
+    """
+    for stock_df in stock_df_iterator:
+        for indicator in technical_indicators:
+            stock_df.get(indicator)
+
+        df = stockstats.unwrap(stock_df)
+        df.reset_index(inplace=True)
+        df.dropna(inplace=True)
+
+        yield df
+
+
+def merge_dataframes(dataframe_iterator: Iterator[pd.DataFrame]) -> pd.DataFrame:
+    """Merge dataframes.
+
+    Args:
+        dataframe_iterator (Iterator[pd.DataFrame]): Iterator of pd.DataFrame.
+
+    Returns:
+        pd.DataFrame: Merged dataframe.
+    """
+    dataframe = pd.concat(dataframe_iterator, ignore_index=True)
+    dataframe = dataframe.sort_values(["date", "ticker"], ignore_index=True)
+    dataframe.reset_index(drop=True, inplace=True)
+
+    return dataframe
+
+
+def select_time_range(
+    dataframe: pd.DataFrame, start: str | None, end: str | None
+) -> pd.DataFrame:
+    """Select time range of dataframe.
+
+    Args:
+        dataframe (pd.DataFrame): dataframe to select time range for.
+        start (str | None, optional): start date of dataframe. Defaults to None.
+        end (str | None, optional): max date of dataframe. Defaults to None.
+
+    Returns:
+        pd.DataFrame: dataframe with selected time range.
+    """
+    if start is not None:
+        dataframe = dataframe[dataframe.date >= pd.to_datetime(start).date()]
+
+    if end is not None:
+        dataframe = dataframe[dataframe.date <= pd.to_datetime(end).date()]
+
+    return dataframe
+
+
+def clean_data(dataframe: pd.DataFrame) -> pd.DataFrame:
+    """Clean the data.
+
+    Args:
+        dataframe (pd.DataFrame): Dataframe to clean.
+
+    Returns:
+        pd.DataFrame: Cleaned dataframe.
+    """
+    df = dataframe.copy()
+    df = df.sort_values(["date", "ticker"], ignore_index=True)
+    df.index = df.date.factorize()[0]
+    merged_closes = df.pivot_table(index="date", columns="ticker", values="close")
+    merged_closes = merged_closes.dropna(axis=1)
+    tics = merged_closes.columns
+    df = df[df.ticker.isin(tics)]
+
+    return dataframe

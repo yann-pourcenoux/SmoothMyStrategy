@@ -1,3 +1,5 @@
+"""Setup file for Finance package."""
+
 from setuptools import find_packages, setup
 
 STYLE_PKGS = [
@@ -26,8 +28,12 @@ ML_PKGS = [
 VIZ_PKGS = [
     "seaborn~=0.12.2",
 ]
-
-TEST_PKGS = ["pytest~=7.4.0"]
+FIN_PKG = [
+    "stockstats=~0.6.2",
+]
+TEST_PKGS = [
+    "pytest~=7.4.0",
+]
 
 
 setup(
