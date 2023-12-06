@@ -13,7 +13,7 @@ from data.constants import FINANCE_DATA_PATH
 LOGGER = logging.getLogger(__name__)
 
 
-class DataLoaderConfig(pydantic.BaseModel):
+class DataLoaderConfigSchema(pydantic.BaseModel):
     """Configuration for DataLoader.
 
     Attributes:
@@ -21,15 +21,13 @@ class DataLoaderConfig(pydantic.BaseModel):
     """
 
     tickers: list[str]
-    start_date: str | None = None
-    end_date: str | None = None
 
 
-def load_data(config: DataLoaderConfig) -> Iterable[stockstats.StockDataFrame]:
+def load_data(config: DataLoaderConfigSchema) -> Iterable[stockstats.StockDataFrame]:
     """Load data from csv files.
 
     Args:
-        config (DataLoaderConfig): configuration for DataLoader.
+        config (DataLoaderConfigSchema): configuration for DataLoader.
 
     Returns:
         Iterable[stockstats.StockDataFrame]: iterable of stockstats.StockDataFrame.

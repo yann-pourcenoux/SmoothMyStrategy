@@ -1,13 +1,13 @@
 """Data preprocessing module."""
 
-from typing import Iterator
+from typing import Iterable
 
 import pandas as pd
 import pydantic
 import stockstats
 
 
-class DataPreprocessingConfig(pydantic.BaseModel):
+class DataPreprocessingConfigSchema(pydantic.BaseModel):
     """Configuration for DataPreprocessing.
 
     Attributes:
@@ -21,15 +21,15 @@ class DataPreprocessingConfig(pydantic.BaseModel):
 
 
 def preprocess_data(
-    stock_df_iterator: Iterator[stockstats.StockDataFrame],
-    config: DataPreprocessingConfig,
+    stock_df_iterator: Iterable[stockstats.StockDataFrame],
+    config: DataPreprocessingConfigSchema,
 ) -> pd.DataFrame:
     """Preprocess the data.
 
     Args:
-        stock_df_iterator (Iterator[stockstats.StockDataFrame]): Iterator of
+        stock_df_iterator (Iterable[stockstats.StockDataFrame]): Iterable of
             stockstats.StockDataFrame.
-        config (DataPreprocessingConfig): Configuration for preprocessing.
+        config (DataPreprocessingConfigSchema): Configuration for preprocessing.
 
     Returns:
         pd.DataFrame: Preprocessed dataframe.
@@ -43,22 +43,25 @@ def preprocess_data(
     dataframe = select_time_range(dataframe, config.start_date, config.end_date)
     dataframe = clean_data(dataframe)
 
+    # Drop the date and ticker columns
+    dataframe.drop(columns=["date", "ticker"], inplace=True)
+
     return dataframe
 
 
 def _add_technical_indicators(
-    stock_df_iterator: Iterator[stockstats.StockDataFrame],
+    stock_df_iterator: Iterable[stockstats.StockDataFrame],
     technical_indicators: list[str],
-) -> Iterator[pd.DataFrame]:
+) -> Iterable[pd.DataFrame]:
     """Add technical indicators to dataframe.
 
     Args:
-        stock_df_iterator (Iterator[stockstats.StockDataFrame]): Iterator of
+        stock_df_iterator (Iterable[stockstats.StockDataFrame]): Iterable of
             stockstats.StockDataFrame.
         technical_indicators (list[str]): list of technical indicators to add.
 
     Returns:
-        Iterator[pd.DataFrame]: Iterator of pd.DataFrame.
+        Iterable[pd.DataFrame]: Iterable of pd.DataFrame.
     """
     for stock_df in stock_df_iterator:
         for indicator in technical_indicators:
@@ -71,11 +74,11 @@ def _add_technical_indicators(
         yield df
 
 
-def merge_dataframes(dataframe_iterator: Iterator[pd.DataFrame]) -> pd.DataFrame:
+def merge_dataframes(dataframe_iterator: Iterable[pd.DataFrame]) -> pd.DataFrame:
     """Merge dataframes.
 
     Args:
-        dataframe_iterator (Iterator[pd.DataFrame]): Iterator of pd.DataFrame.
+        dataframe_iterator (Iterable[pd.DataFrame]): Iterable of pd.DataFrame.
 
     Returns:
         pd.DataFrame: Merged dataframe.
@@ -119,11 +122,11 @@ def clean_data(dataframe: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: Cleaned dataframe.
     """
     df = dataframe.copy()
-    df = df.sort_values(["date", "ticker"], ignore_index=True)
+    df.sort_values(["date", "ticker"], ignore_index=True, inplace=True)
     df.index = df.date.factorize()[0]
     merged_closes = df.pivot_table(index="date", columns="ticker", values="close")
     merged_closes = merged_closes.dropna(axis=1)
     tics = merged_closes.columns
     df = df[df.ticker.isin(tics)]
 
-    return dataframe
+    return df

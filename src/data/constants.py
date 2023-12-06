@@ -1,3 +1,5 @@
+"""Module to hold some constants useful for the data related modules."""
+
 import os
 
 import git
