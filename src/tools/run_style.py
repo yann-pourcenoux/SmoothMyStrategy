@@ -1,5 +1,6 @@
-import logging
 import subprocess
+
+from loguru import logger
 
 
 def main():
@@ -13,12 +14,11 @@ def main():
     }
 
     for name, code in return_codes.items():
-        logging.info(f"{name}: {code}")
+        logger.info(f"{name}: {code}")
 
     if sum(return_codes.values()) != 0:
         raise ValueError("Some errors happened.")
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
     main()

@@ -1,6 +1,5 @@
 """Data Loader module."""
 
-import logging
 import os
 from typing import Iterable
 
@@ -9,8 +8,6 @@ import pydantic
 import stockstats
 
 from data.constants import FINANCE_DATA_PATH
-
-LOGGER = logging.getLogger(__name__)
 
 
 class DataLoaderConfigSchema(pydantic.BaseModel):

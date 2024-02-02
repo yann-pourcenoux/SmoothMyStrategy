@@ -1,14 +1,12 @@
 import argparse
 import json
-import logging
 import os
 
 import yfinance as yf
+from loguru import logger
 from tqdm import tqdm
 
 from data.constants import CONFIG_PATH, FINANCE_DATA_PATH
-
-LOGGER = logging.getLogger(__file__)
 
 
 def download_tickers(tickers: list[str], data_path: str) -> None:
@@ -74,15 +72,14 @@ def _parse_args():
 
 def main():
     """Main function."""
-    logging.basicConfig(level=logging.INFO)
     args = _parse_args()
 
-    LOGGER.info(f"Downloading data to {args.output_path} ...")
+    logger.info(f"Downloading data to {args.output_path} ...")
     progress_bar = tqdm(args.files, leave=False)
     for file in progress_bar:
         progress_bar.set_description(f"Downloading tickers from file {file}:")
         download_tickers(load_ticker_list(file), args.output_path)
-    LOGGER.info("Done.")
+    logger.info("Done.")
 
 
 if __name__ == "__main__":
