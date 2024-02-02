@@ -1,17 +1,12 @@
 # Use the official PyTorch base image
-FROM pytorch/pytorch:latest
+FROM pytorch/pytorch:2.1.2-cuda12.1-cudnn8-runtime
 
 # Install git
 RUN apt update -y
 RUN apt install -y git
 
-# Install the package
-COPY setup.py .
-ADD src src
-RUN pip install -e .
-
 # Add a non root user
 RUN adduser vscode
 
-# Add .local/bin to PATH
-RUN export PATH=$PATH:/home/vscode/.local/bin
+# Install needed dependencies for mujoco
+RUN apt install -y wget gcc libosmesa6-dev libgl1-mesa-glx libglfw3

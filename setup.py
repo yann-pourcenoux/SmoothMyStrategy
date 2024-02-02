@@ -2,6 +2,20 @@
 
 from setuptools import find_packages, setup
 
+DS_PKGS = [
+    "pandas~=2.1.0",
+    "yfinance~=0.2.28",
+    "statsmodels~=0.14.0",
+]
+FIN_PKG = [
+    "stockstats~=0.6.2",
+]
+RL_PKGS = [
+    "gymnasium~=0.29.1",
+    "mujoco-py~=2.1.2",
+    "tensordict~=0.2.1",
+    "torchrl~=0.2.1",
+]
 STYLE_PKGS = [
     "black~=23.7.0",
     "docformatter~=1.7.5",
@@ -10,31 +24,22 @@ STYLE_PKGS = [
     "prettier~=0.0.7",
     "ruff~=0.0.280",
 ]
-UTILS_PKGS = [
-    "GitPython~=3.1.35",
-    "jupyter~=1.0.0",
-    "pydantic~=2.5.2",
-]
-DS_PKGS = [
-    "pandas~=2.1.0",
-    "yfinance~=0.2.28",
-    "statsmodels~=0.14.0",
-    "trendln~=0.1.10",
-]
-ML_PKGS = [
-    "xgboost~=2.0.0",
-    "scikit-learn~=1.3.0",
-]
-VIZ_PKGS = [
-    "seaborn~=0.12.2",
-]
-FIN_PKG = [
-    "stockstats=~0.6.2",
-]
 TEST_PKGS = [
     "pytest~=7.4.0",
 ]
-
+UTILS_PKGS = [
+    "GitPython~=3.1.35",
+    "icecream~=2.1.3",
+    "jupyter~=1.0.0",
+    "loguru~=0.7.2",
+    "pydantic~=2.5.2",
+    "hydra-core~=1.3.2",
+]
+VIZ_PKGS = [
+    "seaborn~=0.12.2",
+    "wandb==0.15.0",
+]
+PKGS = DS_PKGS + FIN_PKG + RL_PKGS + STYLE_PKGS + TEST_PKGS + UTILS_PKGS + VIZ_PKGS
 
 setup(
     name="Finance",
@@ -45,5 +50,5 @@ setup(
     url="https://gitlab.com/yannpourcenoux/Finance",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
-    install_requires=STYLE_PKGS + TEST_PKGS + UTILS_PKGS + DS_PKGS + ML_PKGS + VIZ_PKGS,
+    install_requires=PKGS,
 )

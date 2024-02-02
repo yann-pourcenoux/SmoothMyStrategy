@@ -8,22 +8,17 @@
     // Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
     "dockerfile": "../Dockerfile"
   },
-
   // Features to add to the dev container. More info: https://containers.dev/features.
   // "features": {},
-
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   // "forwardPorts": [],
-
   // Uncomment the next line to run commands after the container is created.
   // "postCreateCommand": "cat /etc/os-release",
-
   // Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
   // "remoteUser": "vscode",
-  // "runArgs": [ "-u", "1000"],
+  "runArgs": ["--gpus", "all", "--platform", "linux/amd64"],
   "containerUser": "vscode",
   "updateRemoteUserUID": true,
-
   // Configure tool-specific properties.
   "customizations": {
     "vscode": {
@@ -37,8 +32,18 @@
         "GitHub.copilot",
         "ms-toolsai.jupyter",
         "ms-python.pylint",
-        "ms-python.black-formatter"
+        "ms-python.black-formatter",
+        "mechatroner.rainbow-csv",
+        "redhat.vscode-yaml"
       ]
     }
-  }
+  },
+  // Mount the folder with the ssh key
+  "mounts": [
+    "type=bind,source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,readonly"
+  ],
+  // Run the postCreateCommand script
+  "postCreateCommand": "bash .devcontainer/postCreateCommand.sh",
+  // Run the postStartCommand script
+  "postStartCommand": "bash .devcontainer/postStartCommand.sh"
 }
