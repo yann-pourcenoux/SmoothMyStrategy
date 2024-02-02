@@ -7,7 +7,7 @@ import pandas as pd
 import pydantic
 import stockstats
 
-from data.constants import FINANCE_DATA_PATH
+from data.constants import DATASET_PATH
 
 
 class DataLoaderConfigSchema(pydantic.BaseModel):
@@ -17,7 +17,7 @@ class DataLoaderConfigSchema(pydantic.BaseModel):
         tickers (list[str]): list of tickers to load data for.
     """
 
-    tickers: list[str]
+    tickers: list[str] = ["AAPL", "MSFT"]
 
 
 def load_data(config: DataLoaderConfigSchema) -> Iterable[stockstats.StockDataFrame]:
@@ -30,7 +30,7 @@ def load_data(config: DataLoaderConfigSchema) -> Iterable[stockstats.StockDataFr
         Iterable[stockstats.StockDataFrame]: iterable of stockstats.StockDataFrame.
     """
     for ticker in config.tickers:
-        df = pd.read_csv(os.path.join(FINANCE_DATA_PATH, f"{ticker}.csv"))
+        df = pd.read_csv(os.path.join(DATASET_PATH, f"{ticker}.csv"))
         df = df[["Date", "Open", "High", "Low", "Close", "Volume"]]
 
         df = _select_and_rename_columns(df)
