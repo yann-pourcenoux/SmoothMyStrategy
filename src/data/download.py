@@ -1,3 +1,5 @@
+"""Utility functions to download data from Yahoo Finance."""
+
 import argparse
 import json
 import os
@@ -6,7 +8,7 @@ import yfinance as yf
 from loguru import logger
 from tqdm import tqdm
 
-from data.constants import CONFIG_PATH, FINANCE_DATA_PATH
+from data.constants import DATA_CONFIG_PATH, DATASET_PATH
 
 
 def download_tickers(tickers: list[str], data_path: str) -> None:
@@ -55,7 +57,7 @@ def _parse_args():
         metavar="output_path",
         type=str,
         help="Path to save the data to.",
-        default=FINANCE_DATA_PATH,
+        default=DATASET_PATH,
     )
     parser.add_argument(
         "--files",
@@ -64,7 +66,10 @@ def _parse_args():
         type=str,
         help="List of json files containing tickers. "
         + "The files are separated by spaces.",
-        default=[os.path.join(CONFIG_PATH, file) for file in os.listdir(CONFIG_PATH)],
+        default=[
+            os.path.join(DATA_CONFIG_PATH, file)
+            for file in os.listdir(DATA_CONFIG_PATH)
+        ],
     )
 
     return parser.parse_args()
