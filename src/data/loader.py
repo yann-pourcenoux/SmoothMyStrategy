@@ -4,20 +4,10 @@ import os
 from typing import Iterable
 
 import pandas as pd
-import pydantic
 import stockstats
 
+from config.schemas import DataLoaderConfigSchema
 from data.constants import DATASET_PATH
-
-
-class DataLoaderConfigSchema(pydantic.BaseModel):
-    """Configuration for DataLoader.
-
-    Attributes:
-        tickers (list[str]): list of tickers to load data for.
-    """
-
-    tickers: list[str] = ["AAPL", "MSFT"]
 
 
 def load_data(config: DataLoaderConfigSchema) -> Iterable[stockstats.StockDataFrame]:

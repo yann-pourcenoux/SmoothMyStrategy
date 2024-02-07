@@ -11,10 +11,8 @@ FIN_PKG = [
     "stockstats~=0.6.2",
 ]
 RL_PKGS = [
-    "gymnasium~=0.29.1",
-    "mujoco-py~=2.1.2",
-    "tensordict~=0.2.1",
-    "torchrl~=0.2.1",
+    "tensordict~=0.3.0",
+    "torchrl~=0.3.0",
 ]
 STYLE_PKGS = [
     "black~=23.7.0",
