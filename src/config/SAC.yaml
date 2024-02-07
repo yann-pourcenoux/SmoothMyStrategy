@@ -1,0 +1,18 @@
+defaults:
+  - base_training
+  - _self_
+
+loading:
+  tickers:
+    - AAPL
+    - MSFT
+
+preprocessing:
+  technical_indicators:
+    - macd
+    - boll_30
+    - boll_60
+  start_date: 2010-01-01
+
+rest:
+  batch_size: 64

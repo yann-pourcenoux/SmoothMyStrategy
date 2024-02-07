@@ -3,21 +3,9 @@
 from typing import Iterable
 
 import pandas as pd
-import pydantic
 import stockstats
 
-
-class DataPreprocessingConfigSchema(pydantic.BaseModel):
-    """Configuration for DataPreprocessing.
-
-    Attributes:
-        technical_indicators (list[str]): list of technical indicators to use.
-    """
-
-    technical_indicators: list[str] = ["macd", "boll_30", "boll_60"]
-    start_date: str | None = None
-    end_date: str | None = None
-    # TODO: add vix and turbulence
+from config.schemas import DataPreprocessingConfigSchema
 
 
 def preprocess_data(
