@@ -94,8 +94,16 @@ def compute_portfolio_value(tensordict: TensorDict) -> list[float] | list[list[f
     portfolio_value = tensordict["cash_amount"] + torch.sum(
         tensordict["num_shares_owned"] * tensordict["close"],
         dim=-1,
-        keepdim=False,
+        keepdim=True,
     )
+    portfolio_value = portfolio_value.squeeze(-1)
     if len(portfolio_value.shape) == 2:
-        portfolio_value = portfolio_value.mean(0)
+        portfolio_value = portfolio_value.mean(dim=0)
     return portfolio_value.tolist()
+
+
+def get_device(device: str | None) -> torch.device:
+    """Get the device."""
+    if device is None:
+        return "cuda" if torch.cuda.is_available() else "cpu"
+    return torch.device(device)
