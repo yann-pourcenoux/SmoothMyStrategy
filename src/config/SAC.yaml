@@ -15,4 +15,5 @@ preprocessing:
   start_date: 2010-01-01
 
 rest:
-  batch_size: 64
+  device: cuda
+  seed: 0

@@ -34,8 +34,8 @@ class DataLoaderConfigSchema:
 class RestConfigSchema:
     """Configuration fields for all the rest just to test."""
 
-    batch_size: int = 256
     seed: int = 0
+    device: str | None = None
 
 
 @pydantic.dataclasses.dataclass

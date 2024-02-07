@@ -38,8 +38,8 @@ class TradingEnv(EnvBase):
         self._convert_to_list_tensors(self._env_data)
 
         # Should be safe to remove, keeping in the meantime for debug
-        td_params = self.gen_params()
-        self._make_spec(td_params)
+        # td_params = self.gen_params(self.batch_size)
+        self._make_spec()  # td_params)
 
         if seed is None:
             seed = torch.empty((), dtype=torch.int32).random_().item()
@@ -176,10 +176,7 @@ class TradingEnv(EnvBase):
         out = out.update(state)
         return out
 
-    def gen_params(self, batch_size: Optional[int] = None):
-        if batch_size is None:
-            batch_size = []
-
+    def gen_params(self, batch_size: torch.Size) -> TensorDict:
         td_params = TensorDict(
             {
                 "initial_cash_amount": torch.full(
@@ -200,10 +197,10 @@ class TradingEnv(EnvBase):
         self._seed = seed
         self.rng = torch.manual_seed(seed)
 
-    def _make_spec(self, td_params):
+    def _make_spec(self):  # , td_params):
         state = {
             key: UnboundedContinuousTensorSpec(
-                shape=(self._num_tickers,),
+                shape=self.batch_size + (self._num_tickers,),
                 dtype=torch.float32,
                 device=self.device,
             )
@@ -212,29 +209,29 @@ class TradingEnv(EnvBase):
         self.observation_spec = CompositeSpec(
             {
                 "cash_amount": UnboundedContinuousTensorSpec(
-                    shape=(1,),
+                    shape=self.batch_size + (1,),
                     device=self.device,
                 ),
                 "num_shares_owned": UnboundedContinuousTensorSpec(
-                    shape=(self._num_tickers,),
+                    shape=self.batch_size + (self._num_tickers,),
                     device=self.device,
                 ),
                 **state,
             },
-            shape=(),
+            shape=self.batch_size,
             device=self.device,
         )
         self.state_spec = self.observation_spec.clone()
 
         self.action_spec = BoundedTensorSpec(
-            shape=(self._num_tickers,),
+            shape=self.batch_size + (self._num_tickers,),
             low=-1,
             high=1,
             device=self.device,
         )
 
         self.reward_spec = UnboundedContinuousTensorSpec(
-            shape=(*td_params.shape, 1),
+            shape=self.batch_size + (1,),
             device=self.device,
         )
 

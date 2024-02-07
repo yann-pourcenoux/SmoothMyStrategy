@@ -35,7 +35,7 @@ def run_training(config: ExperimentConfigSchema):
     """Train an agent."""
 
     # Find device
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = utils.get_device(config.rest.device)
 
     # Set seed
     torch.manual_seed(config.rest.seed)
