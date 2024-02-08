@@ -136,11 +136,10 @@ class TradingEnv(EnvBase):
         )
 
         # Compute reward
-        reward = (
-            new_cash_amount
-            + torch.sum(new_num_shares_owned * out["close"], dim=-1, keepdim=True)
-            - portfolio_value
+        new_portfolio_value = new_cash_amount + torch.sum(
+            new_num_shares_owned * out["close"], dim=-1, keepdim=True
         )
+        reward = torch.log(new_portfolio_value / portfolio_value)
         out["reward"] = reward
 
         return out
