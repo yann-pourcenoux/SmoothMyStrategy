@@ -61,6 +61,7 @@ def run_training(config: ExperimentConfigSchema):
         config=config.environment,
         num_tickers=len(config.loading.tickers),
         env_data=preprocessed_data,
+        fixed_initial_distribution=True,
         seed=config.rest.seed,
         device=device,
     )
