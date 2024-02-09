@@ -1,6 +1,6 @@
 """Module to define the environment to trade stocks."""
 
-from typing import List, Optional
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -24,22 +24,21 @@ class TradingEnv(EnvBase):
         config: EnvironmentConfigSchema,
         num_tickers: int,
         env_data: pd.DataFrame,
+        fixed_initial_distribution: bool = False,
         seed: int | None = None,
         device: str = "cpu",
     ):
-        batch_size = (
-            torch.Size([config.batch_size]) if config.batch_size is not None else None
-        )
+        batch_size = [config.batch_size] if config.batch_size is not None else None
         super().__init__(device=device, batch_size=batch_size)
         self._env_data = env_data
+        self._fixed_initial_distribution = fixed_initial_distribution
         self._num_tickers = num_tickers
         self._cash_amount = config.cash_amount
         self._day = torch.zeros((), dtype=torch.int32)
         self._convert_to_list_tensors(self._env_data)
 
         # Should be safe to remove, keeping in the meantime for debug
-        # td_params = self.gen_params(self.batch_size)
-        self._make_spec()  # td_params)
+        self._make_spec()
 
         if seed is None:
             seed = torch.empty((), dtype=torch.int32).random_().item()
@@ -144,53 +143,34 @@ class TradingEnv(EnvBase):
 
         return out
 
-    def _reset(self, tensordict: Optional[TensorDict] = None):
+    def _reset(self, _: TensorDict | None = None) -> TensorDict:
         self._day = torch.zeros((), dtype=torch.int32)
+        out = self._get_state_of_day(self._day, self.batch_size)
 
-        if tensordict is None:
-            tensordict = self.gen_params(batch_size=self.batch_size)
-        elif tensordict.is_empty():
-            tensordict = self.gen_params(batch_size=tensordict.shape)
+        if self._fixed_initial_distribution:
+            distribution_gen_fn = torch.ones
+        else:
+            distribution_gen_fn = torch.rand
 
-        out = TensorDict(
-            {
-                "cash_amount": torch.full(
-                    (*tensordict.shape, 1),
-                    self._cash_amount,
-                    dtype=torch.float32,
-                    device=self.device,
-                ),  # tensordict["initial_cash_amount"],
-                "num_shares_owned": torch.zeros(
-                    (*tensordict.shape, self._num_tickers),
-                    dtype=torch.float32,
-                    device=self.device,
-                ),
-            },
-            batch_size=tensordict.shape,
+        # +1 comes form the free cash to keep
+        distribution = distribution_gen_fn(
+            size=self.batch_size + (self._num_tickers + 1,),
+            dtype=torch.float32,
             device=self.device,
         )
+        distribution = distribution / torch.sum(distribution, dim=-1, keepdim=True)
+        # Take only the distribution of shares
+        distribution = distribution[..., :-1]
+        # Compute the number of shares
+        num_shares_owned = torch.floor(distribution * self._cash_amount / out["close"])
+        # Update the cash amount
+        cash_amount = self._cash_amount - torch.sum(
+            num_shares_owned * out["close"], dim=-1, keepdim=True
+        )
 
-        state = self._get_state_of_day(self._day, tensordict.shape)
-
-        out = out.update(state)
+        out["cash_amount"] = cash_amount
+        out["num_shares_owned"] = num_shares_owned
         return out
-
-    def gen_params(self, batch_size: torch.Size) -> TensorDict:
-        td_params = TensorDict(
-            {
-                "initial_cash_amount": torch.full(
-                    size=(1,),
-                    fill_value=self._cash_amount,
-                    device=self.device,
-                )
-            },
-            batch_size=[],
-            device=self.device,
-        )
-
-        if batch_size:
-            td_params = td_params.expand(batch_size).contiguous()
-        return td_params
 
     def _set_seed(self, seed):
         self._seed = seed
@@ -271,12 +251,17 @@ def get_sac_environment(
     config: EnvironmentConfigSchema,
     num_tickers: int,
     env_data: pd.DataFrame,
+    fixed_initial_distribution: bool = False,
     seed: int | None = None,
     device: str = "cpu",
 ) -> TransformedEnv:
     """Get the environment to train using SAC."""
-    env = TradingEnv(config, num_tickers, env_data, seed, device)
+    env = TradingEnv(
+        config, num_tickers, env_data, fixed_initial_distribution, seed, device
+    )
+    check_env_specs(env, seed=seed)
     env = _apply_transform_observation(env)
+    check_env_specs(env, seed=seed)
     env = _apply_sac_transforms(env, config)
     check_env_specs(env, seed=seed)
     return env
