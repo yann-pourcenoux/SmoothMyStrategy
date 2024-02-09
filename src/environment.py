@@ -44,25 +44,29 @@ class TradingEnv(EnvBase):
             seed = torch.empty((), dtype=torch.int32).random_().item()
         self._set_seed(seed)
 
+    # TODO(@yann.pourcenoux): Maybe this could be improved
     def _convert_to_list_tensors(self, dataframe: pd.DataFrame):
         self.column_names = dataframe.columns
         self.states_per_day = []
         self._max_day = len(np.unique(dataframe.index.values)) - 1
         for index in range(self._max_day + 1):
-            self.states_per_day.append(
-                TensorDict(
-                    {
-                        column: torch.tensor(
-                            data=dataframe.loc[index, column].values,
-                            dtype=torch.float32,
-                            device=self.device,
-                        )
-                        for column in self.column_names
-                    },
-                    batch_size=[],
+            tensordict = TensorDict(
+                {},
+                batch_size=[],
+                device=self.device,
+            )
+            for column in self.column_names:
+                data = dataframe.loc[index, column]
+                if self._num_tickers > 1:
+                    data = data.values
+                else:
+                    data = np.array([data])
+                tensordict[column] = torch.tensor(
+                    data=data,
+                    dtype=torch.float32,
                     device=self.device,
                 )
-            )
+            self.states_per_day.append(tensordict)
 
     def _get_state_of_day(self, day: int | torch.Tensor, batch_size: List | torch.Size):
         state = self.states_per_day[day].clone()
