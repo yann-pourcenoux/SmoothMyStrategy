@@ -1,0 +1,50 @@
+defaults:
+  - base_experiment
+  - _self_
+
+loading:
+  tickers:
+    - AAPL
+
+agent:
+  hidden_sizes:
+    - 16
+    - 16
+environment:
+  batch_size: 32
+
+collector:
+  frames_per_batch: 5000
+  total_frames: -1
+
+training:
+  num_epochs: 2000
+  num_steps_per_epoch: 1000
+  frames_per_batch: 1000
+
+replay_buffer:
+  buffer_size: 10000000
+  batch_size: 1024
+  buffer_scratch_dir: /workspaces/Finance/outputs/scratch
+
+evaluation:
+  eval_iter: 1
+  eval_rollout_steps: 10000
+
+preprocessing:
+  technical_indicators:
+    - log-ret
+    - log-ret_-1_s
+    - log-ret_-2_s
+    - log-ret_-3_s
+    - log-ret_-4_s
+    - log-ret_-5_s
+    - log-ret_-6_s
+    - log-ret_-7_s
+    - log-ret_-8_s
+    - log-ret_-9_s
+  start_date: 2010-01-01
+
+rest:
+  device: cuda
+  seed: 0

@@ -78,15 +78,6 @@ class LossConfigSchema:
 
 
 @pydantic.dataclasses.dataclass
-class CollectorConfigSchema:
-    """Configuration schema for the collector."""
-
-    init_random_frames: int = 25000
-    frames_per_batch: int = 1024
-    total_frames: int = 1000000
-
-
-@pydantic.dataclasses.dataclass
 class ReplayBufferConfigSchema:
     """Configuration schema for the replay buffer."""
 
@@ -119,6 +110,23 @@ class EvaluationConfigSchema:
 
 
 @pydantic.dataclasses.dataclass
+class TrainingConfigSchema:
+    """Configuration schema for the training."""
+
+    num_epochs: int = 100
+    num_steps_per_epoch: int = 1000
+    frames_per_batch: int = 1000
+
+
+@pydantic.dataclasses.dataclass
+class CollectorConfigSchema:
+    """Configuration schema for the collector."""
+
+    total_frames: int = -1
+    frames_per_batch: int = 1280
+
+
+@pydantic.dataclasses.dataclass
 class ExperimentConfigSchema:
     """Configuration schema to train a model."""
 
@@ -133,7 +141,8 @@ class ExperimentConfigSchema:
     preprocessing: DataPreprocessingConfigSchema = DataPreprocessingConfigSchema()
     replay_buffer: ReplayBufferConfigSchema = ReplayBufferConfigSchema()
     rest: RestConfigSchema = RestConfigSchema()
+    training: TrainingConfigSchema = TrainingConfigSchema()
 
 
 cs = ConfigStore.instance()
-cs.store(name="base_training", node=ExperimentConfigSchema)
+cs.store(name="base_experiment", node=ExperimentConfigSchema)

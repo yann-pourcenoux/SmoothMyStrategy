@@ -12,6 +12,7 @@ from torchrl.envs.transforms import InitTracker, RewardSum, StepCounter
 from torchrl.envs.utils import check_env_specs
 
 from config.schemas import EnvironmentConfigSchema
+from data.container import DataContainer
 
 
 class TradingEnv(EnvBase):
@@ -22,17 +23,18 @@ class TradingEnv(EnvBase):
     def __init__(
         self,
         config: EnvironmentConfigSchema,
-        num_tickers: int,
-        env_data: pd.DataFrame,
+        data_container: DataContainer,
         fixed_initial_distribution: bool = False,
         seed: int | None = None,
         device: str = "cpu",
     ):
         batch_size = [config.batch_size] if config.batch_size is not None else None
         super().__init__(device=device, batch_size=batch_size)
-        self._env_data = env_data
+        self._data_container = data_container
+        self._env_data = data_container.data
         self._fixed_initial_distribution = fixed_initial_distribution
-        self._num_tickers = num_tickers
+        self._num_tickers = data_container.num_tickers
+        self._num_time_steps = data_container.num_time_steps
         self._cash_amount = config.cash_amount
         self._day = torch.zeros((), dtype=torch.int32)
         self._convert_to_list_tensors(self._env_data)
@@ -48,8 +50,7 @@ class TradingEnv(EnvBase):
     def _convert_to_list_tensors(self, dataframe: pd.DataFrame):
         self.column_names = dataframe.columns
         self.states_per_day = []
-        self._max_day = len(np.unique(dataframe.index.values)) - 1
-        for index in range(self._max_day + 1):
+        for index in range(self._num_time_steps):
             tensordict = TensorDict(
                 {},
                 batch_size=[],
@@ -78,7 +79,7 @@ class TradingEnv(EnvBase):
 
     def _step(self, tensordict: TensorDict):
         # Check if done
-        done = self._day == self._max_day
+        done = self._day == self._num_time_steps - 1
 
         if done:
             return TensorDict(
@@ -147,7 +148,8 @@ class TradingEnv(EnvBase):
 
         return out
 
-    def _reset(self, _: TensorDict | None = None) -> TensorDict:
+    def _reset(self, tensordict: TensorDict | None = None) -> TensorDict:
+        del tensordict
         self._day = torch.zeros((), dtype=torch.int32)
         out = self._get_state_of_day(self._day, self.batch_size)
 
@@ -219,12 +221,12 @@ class TradingEnv(EnvBase):
         )
 
 
-def _apply_transform_observation(env: EnvBase) -> TransformedEnv:
+def _apply_transform_observation(env: TradingEnv) -> TransformedEnv:
     """Concatenates the columns into an observation key."""
     transformed_env = TransformedEnv(
         env=env,
         transform=CatTensors(
-            in_keys=["num_shares_owned", *env.column_names],
+            in_keys=env._data_container._preprocessing_config.technical_indicators,
             dim=-1,
             out_key="observation",
             del_keys=False,
@@ -253,16 +255,13 @@ def _apply_sac_transforms(
 
 def get_sac_environment(
     config: EnvironmentConfigSchema,
-    num_tickers: int,
-    env_data: pd.DataFrame,
+    data_container: DataContainer,
     fixed_initial_distribution: bool = False,
     seed: int | None = None,
     device: str = "cpu",
 ) -> TransformedEnv:
     """Get the environment to train using SAC."""
-    env = TradingEnv(
-        config, num_tickers, env_data, fixed_initial_distribution, seed, device
-    )
+    env = TradingEnv(config, data_container, fixed_initial_distribution, seed, device)
     check_env_specs(env, seed=seed)
     env = _apply_transform_observation(env)
     check_env_specs(env, seed=seed)

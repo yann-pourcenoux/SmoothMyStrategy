@@ -1,5 +1,5 @@
 defaults:
-  - base_training
+  - base_experiment
   - _self_
 
 loading:

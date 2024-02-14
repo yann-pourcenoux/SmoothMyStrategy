@@ -18,7 +18,7 @@ def make_sac_agent(
     eval_env: EnvBase,
     config: AgentConfigSchema,
     device,
-) -> tuple[nn.ModuleList, nn.Module]:
+) -> tuple[nn.ModuleList, ProbabilisticActor]:
     """Make SAC agent."""
     # Define Actor Network
     in_keys = ["observation"]
@@ -29,6 +29,10 @@ def make_sac_agent(
         "num_cells": config.hidden_sizes,
         "out_features": 2 * action_spec.shape[-1],
         "activation_class": get_activation(config.activation),
+        "norm_class": torch.nn.BatchNorm1d,
+        "norm_kwargs": {
+            "num_features": 16
+        },  # TODO: HARDCODED BECAUSE OF THE HIDDEN SIZES
     }
 
     actor_net = MLP(**actor_net_kwargs)
@@ -70,6 +74,10 @@ def make_sac_agent(
         "num_cells": config.hidden_sizes,
         "out_features": 1,
         "activation_class": get_activation(config.activation),
+        "norm_class": torch.nn.BatchNorm1d,
+        "norm_kwargs": {
+            "num_features": 16
+        },  # TODO: HARDCODED BECAUSE OF THE HIDDEN SIZES
     }
 
     qvalue_net = MLP(

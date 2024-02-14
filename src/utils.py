@@ -1,22 +1,17 @@
 """Module that holds all the utils function to run the training."""
 
-from typing import Any
+import time
 
 import torch
-import wandb
+import tqdm
 from tensordict import TensorDict
 from torchrl.collectors import SyncDataCollector
 from torchrl.data import TensorDictPrioritizedReplayBuffer, TensorDictReplayBuffer
 from torchrl.data.replay_buffers.storages import LazyMemmapStorage
 from torchrl.envs import EnvBase
 from torchrl.modules import ProbabilisticActor
-from torchrl.record.loggers.wandb import WandbLogger
 
-from config.schemas import (
-    CollectorConfigSchema,
-    LoggingConfigSchema,
-    ReplayBufferConfigSchema,
-)
+from config.schemas import CollectorConfigSchema, ReplayBufferConfigSchema
 
 
 def make_collector(
@@ -30,7 +25,6 @@ def make_collector(
     collector = SyncDataCollector(
         train_env,
         actor_model_explore,
-        init_random_frames=config.init_random_frames,
         frames_per_batch=config.frames_per_batch,
         total_frames=config.total_frames,
         storing_device="cpu",
@@ -69,26 +63,6 @@ def make_replay_buffer(
     return replay_buffer
 
 
-def log_metrics(logger, metrics, step):
-    for metric_name, metric_value in metrics.items():
-        logger.log_scalar(metric_name, metric_value, step)
-
-
-def log_figure(figure: Any, title: str):
-    wandb.log({title: wandb.Image(figure)})
-
-
-def get_logger(config: LoggingConfigSchema) -> WandbLogger:
-    """Get a wandb logger."""
-    logger = WandbLogger(
-        exp_name=config.experiment,
-        offline=not config.online,
-        save_dir=config.logging_directory,
-        project=config.project,
-    )
-    return logger
-
-
 def compute_portfolio_value(tensordict: TensorDict) -> list[float] | list[list[float]]:
     """Compute the value of a portfolio over the time steps and batch dimensions."""
     portfolio_value = tensordict["cash_amount"] + torch.sum(
@@ -107,3 +81,48 @@ def get_device(device: str | None) -> torch.device:
     if device is None:
         return "cuda" if torch.cuda.is_available() else "cpu"
     return torch.device(device)
+
+
+def collect_data(
+    collector: SyncDataCollector,
+    replay_buffer: TensorDictPrioritizedReplayBuffer | TensorDictReplayBuffer,
+    num_steps_per_episode: int,
+):
+    sampling_start = time.time()
+    for i, tensordict in tqdm.tqdm(
+        enumerate(collector),
+        total=num_steps_per_episode,
+        desc="Sampling",
+        unit="step",
+        leave=False,
+    ):
+        # Stop the loop if reached the number of steps
+        if i == num_steps_per_episode:
+            break
+
+        # Update weights of the inference policy
+        collector.update_policy_weights_()
+
+        # Add to replay buffer
+        tensordict = tensordict.reshape(-1)
+        replay_buffer.extend(tensordict.cpu())
+
+        # Add metrics
+        episode_end = (
+            tensordict["next", "done"]
+            if tensordict["next", "done"].any()
+            else tensordict["next", "truncated"]
+        )
+        episode_rewards = tensordict["next", "episode_reward"][episode_end]
+        # Logging
+        metrics_to_log = {}
+        if len(episode_rewards) > 0:
+            episode_length = tensordict["next", "step_count"][episode_end]
+            metrics_to_log["train/reward"] = episode_rewards.mean().item()
+            metrics_to_log["train/episode_length"] = episode_length.sum().item() / len(
+                episode_length
+            )
+
+    sampling_time = time.time() - sampling_start
+    metrics_to_log["timer/train/sampling_time"] = sampling_time
+    return metrics_to_log
