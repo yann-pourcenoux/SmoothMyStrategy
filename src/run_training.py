@@ -1,19 +1,20 @@
 """Module to run a training."""
 
-# import os
-# os.environ['MKL_THREADING_LAYER'] = 'GNU'
-
+import math
 
 import hydra
 import loguru
 import numpy as np
 import omegaconf
 import torch
+import tqdm
 
 import agents
-import data.loader
+import data.container
 import data.preprocessing
 import environment
+import evaluate
+import logger
 import losses
 import optimizers
 import train
@@ -21,7 +22,7 @@ import utils
 from config.schemas import ExperimentConfigSchema
 
 
-@hydra.main(version_base=None, config_path="config", config_name="base_training")
+@hydra.main(version_base=None, config_path="config", config_name="base_experiment")
 def main(cfg: omegaconf.DictConfig):
     """Wrapper to start the training and interact with hydra."""
     config: ExperimentConfigSchema = omegaconf.OmegaConf.to_object(cfg)
@@ -42,25 +43,23 @@ def run_training(config: ExperimentConfigSchema):
     np.random.seed(config.rest.seed)
 
     # Create logger
-    logger = utils.get_logger(config.logging)
+    wandb_logger = logger.get_logger(config.logging)
 
     # Get environments
-    preprocessed_data = data.preprocessing.preprocess_data(
-        stock_df_iterator=data.loader.load_data(config.loading),
-        config=config.preprocessing,
+    data_container = data.container.DataContainer(
+        loading_config=config.loading, preprocessing_config=config.preprocessing
     )
+
     # Create environments
     train_env = environment.get_sac_environment(
         config=config.environment,
-        num_tickers=len(config.loading.tickers),
-        env_data=preprocessed_data,
+        data_container=data_container,
         seed=config.rest.seed,
         device=device,
     )
     eval_env = environment.get_sac_environment(
         config=config.environment,
-        num_tickers=len(config.loading.tickers),
-        env_data=preprocessed_data,
+        data_container=data_container,
         fixed_initial_distribution=True,
         seed=config.rest.seed,
         device=device,
@@ -98,17 +97,42 @@ def run_training(config: ExperimentConfigSchema):
     )
 
     # Main loop
-    train.train_and_eval(
-        collector=collector,
-        eval_env=eval_env,
-        actor=exploration_policy,
-        replay_buffer=replay_buffer,
-        loss_module=loss_module,
-        optimizers=model_optimizers,
-        target_net_updater=target_net_updater,
-        logger=logger,
-        config=config,
-    )
+    for epoch in tqdm.tqdm(range(config.training.num_epochs), unit="epoch", leave=True):
+        # Collect data
+        metrics_to_log = utils.collect_data(
+            collector,
+            replay_buffer,
+            num_steps_per_episode=math.ceil(
+                collector.env._num_time_steps
+                * config.environment.batch_size
+                / config.training.frames_per_batch
+            ),
+        )
+
+        # Update the models
+        metrics_to_log.update(
+            train.train(
+                config.training,
+                replay_buffer,
+                collector,
+                loss_module,
+                model_optimizers,
+                target_net_updater,
+            )
+        )
+
+        # Evaluation
+        metrics_to_log.update(
+            evaluate.evaluate(
+                eval_env,
+                exploration_policy,
+                config.evaluation,
+            )
+        )
+
+        logger.log_metrics(wandb_logger, metrics_to_log, epoch)
+
+    collector.shutdown()
 
 
 if __name__ == "__main__":
