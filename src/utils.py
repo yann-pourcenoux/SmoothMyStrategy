@@ -109,10 +109,9 @@ def collect_data(
 
         # Add metrics
         episode_end = (
-            tensordict["next", "done"]
-            if tensordict["next", "done"].any()
-            else tensordict["next", "truncated"]
+            tensordict["next", "done"] if tensordict["next", "done"].any() else False
         )
+
         episode_rewards = tensordict["next", "episode_reward"][episode_end]
         # Logging
         metrics_to_log = {}

@@ -8,18 +8,20 @@ loading:
 
 agent:
   hidden_sizes:
-    - 16
-    - 16
-environment:
-  batch_size: 32
+    - 32
+    - 32
+    - 32
+    - 32
+train_environment:
+  batch_size: 64
 
 collector:
   frames_per_batch: 5000
   total_frames: -1
 
 training:
-  num_epochs: 2000
-  num_steps_per_epoch: 1000
+  num_epochs: 10
+  num_steps_per_epoch: 100
   frames_per_batch: 1000
 
 replay_buffer:

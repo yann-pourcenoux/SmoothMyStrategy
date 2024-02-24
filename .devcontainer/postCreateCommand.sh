@@ -6,7 +6,6 @@ export PATH=$PATH:/home/vscode/.local/bin
 # Update pip
 python -m pip install --upgrade pip
 
-
 # Install the package and its dependencies
 pip install -e .
 
