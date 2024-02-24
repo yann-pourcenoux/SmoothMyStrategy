@@ -31,7 +31,7 @@ def make_sac_agent(
         "activation_class": get_activation(config.activation),
         "norm_class": torch.nn.BatchNorm1d,
         "norm_kwargs": {
-            "num_features": 16
+            "num_features": 32
         },  # TODO: HARDCODED BECAUSE OF THE HIDDEN SIZES
     }
 
@@ -76,7 +76,7 @@ def make_sac_agent(
         "activation_class": get_activation(config.activation),
         "norm_class": torch.nn.BatchNorm1d,
         "norm_kwargs": {
-            "num_features": 16
+            "num_features": 32
         },  # TODO: HARDCODED BECAUSE OF THE HIDDEN SIZES
     }
 
@@ -92,6 +92,7 @@ def make_sac_agent(
     model = nn.ModuleList([actor, qvalue]).to(device)
 
     # init nets
+    model.eval()
     with torch.no_grad(), set_exploration_type(ExplorationType.RANDOM):
         td = eval_env.reset()
         td = td.to(device)
@@ -99,6 +100,7 @@ def make_sac_agent(
             net(td)
     del td
     eval_env.close()
+    model.train()
 
     return model, model[0]
 

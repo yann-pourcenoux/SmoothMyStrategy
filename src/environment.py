@@ -24,18 +24,17 @@ class TradingEnv(EnvBase):
         self,
         config: EnvironmentConfigSchema,
         data_container: DataContainer,
-        fixed_initial_distribution: bool = False,
         seed: int | None = None,
         device: str = "cpu",
     ):
         batch_size = [config.batch_size] if config.batch_size is not None else None
         super().__init__(device=device, batch_size=batch_size)
+
+        self._config = config
         self._data_container = data_container
         self._env_data = data_container.data
-        self._fixed_initial_distribution = fixed_initial_distribution
         self._num_tickers = data_container.num_tickers
         self._num_time_steps = data_container.num_time_steps
-        self._cash_amount = config.cash_amount
         self._day = torch.zeros((), dtype=torch.int32)
         self._convert_to_list_tensors(self._env_data)
 
@@ -149,11 +148,11 @@ class TradingEnv(EnvBase):
         return out
 
     def _reset(self, tensordict: TensorDict | None = None) -> TensorDict:
-        del tensordict
+        del tensordict  # Not used in that function
         self._day = torch.zeros((), dtype=torch.int32)
         out = self._get_state_of_day(self._day, self.batch_size)
 
-        if self._fixed_initial_distribution:
+        if self._config.fixed_initial_distribution:
             distribution_gen_fn = torch.ones
         else:
             distribution_gen_fn = torch.rand
@@ -168,9 +167,11 @@ class TradingEnv(EnvBase):
         # Take only the distribution of shares
         distribution = distribution[..., :-1]
         # Compute the number of shares
-        num_shares_owned = torch.floor(distribution * self._cash_amount / out["close"])
+        num_shares_owned = torch.floor(
+            distribution * self._config.cash_amount / out["close"]
+        )
         # Update the cash amount
-        cash_amount = self._cash_amount - torch.sum(
+        cash_amount = self._config.cash_amount - torch.sum(
             num_shares_owned * out["close"], dim=-1, keepdim=True
         )
 
@@ -182,7 +183,7 @@ class TradingEnv(EnvBase):
         self._seed = seed
         self.rng = torch.manual_seed(seed)
 
-    def _make_spec(self):  # , td_params):
+    def _make_spec(self):
         state = {
             key: UnboundedContinuousTensorSpec(
                 shape=self.batch_size + (self._num_tickers,),
@@ -236,15 +237,13 @@ def _apply_transform_observation(env: TradingEnv) -> TransformedEnv:
     return transformed_env
 
 
-def _apply_sac_transforms(
-    env: EnvBase, config: EnvironmentConfigSchema
-) -> TransformedEnv:
+def _apply_sac_transforms(env: EnvBase) -> TransformedEnv:
     """Apply the necessary transforms to train using SAC."""
     transformed_env = TransformedEnv(
         env=env,
         transform=Compose(
             InitTracker(),
-            StepCounter(config.max_episode_steps),
+            StepCounter(),
             DoubleToFloat(),
             RewardSum(),
         ),
@@ -256,15 +255,19 @@ def _apply_sac_transforms(
 def get_sac_environment(
     config: EnvironmentConfigSchema,
     data_container: DataContainer,
-    fixed_initial_distribution: bool = False,
-    seed: int | None = None,
+    seed: int = 0,
     device: str = "cpu",
 ) -> TransformedEnv:
     """Get the environment to train using SAC."""
-    env = TradingEnv(config, data_container, fixed_initial_distribution, seed, device)
+    env: EnvBase = TradingEnv(
+        config=config,
+        data_container=data_container,
+        seed=seed,
+        device=device,
+    )
     check_env_specs(env, seed=seed)
     env = _apply_transform_observation(env)
     check_env_specs(env, seed=seed)
-    env = _apply_sac_transforms(env, config)
+    env = _apply_sac_transforms(env)
     check_env_specs(env, seed=seed)
     return env

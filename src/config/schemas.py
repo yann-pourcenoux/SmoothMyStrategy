@@ -54,14 +54,14 @@ class EnvironmentConfigSchema:
 
     batch_size: int | None = None
     cash_amount: float = 1e6
-    max_episode_steps: int = 1000000
+    fixed_initial_distribution: bool = False
 
 
 @pydantic.dataclasses.dataclass
 class AgentConfigSchema:
     """Configuration schema for the agent."""
 
-    hidden_sizes: tuple[int, int] = (256, 256)
+    hidden_sizes: tuple[int, ...] = (256, 256)
     default_policy_scale: float = 1.0
     scale_lb: float = 0.1
     activation: str = "relu"
@@ -132,7 +132,9 @@ class ExperimentConfigSchema:
 
     agent: AgentConfigSchema = AgentConfigSchema()
     collector: CollectorConfigSchema = CollectorConfigSchema()
-    environment: EnvironmentConfigSchema = EnvironmentConfigSchema()
+    eval_environment: EnvironmentConfigSchema = EnvironmentConfigSchema(
+        batch_size=1, fixed_initial_distribution=True
+    )
     evaluation: EvaluationConfigSchema = EvaluationConfigSchema()
     loading: DataLoaderConfigSchema = DataLoaderConfigSchema()
     logging: LoggingConfigSchema = LoggingConfigSchema()
@@ -141,6 +143,7 @@ class ExperimentConfigSchema:
     preprocessing: DataPreprocessingConfigSchema = DataPreprocessingConfigSchema()
     replay_buffer: ReplayBufferConfigSchema = ReplayBufferConfigSchema()
     rest: RestConfigSchema = RestConfigSchema()
+    train_environment: EnvironmentConfigSchema = EnvironmentConfigSchema()
     training: TrainingConfigSchema = TrainingConfigSchema()
 
 

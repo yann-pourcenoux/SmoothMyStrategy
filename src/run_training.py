@@ -52,15 +52,14 @@ def run_training(config: ExperimentConfigSchema):
 
     # Create environments
     train_env = environment.get_sac_environment(
-        config=config.environment,
+        config=config.train_environment,
         data_container=data_container,
         seed=config.rest.seed,
         device=device,
     )
     eval_env = environment.get_sac_environment(
-        config=config.environment,
+        config=config.eval_environment,
         data_container=data_container,
-        fixed_initial_distribution=True,
         seed=config.rest.seed,
         device=device,
     )
@@ -104,7 +103,7 @@ def run_training(config: ExperimentConfigSchema):
             replay_buffer,
             num_steps_per_episode=math.ceil(
                 collector.env._num_time_steps
-                * config.environment.batch_size
+                * config.train_environment.batch_size
                 / config.training.frames_per_batch
             ),
         )
