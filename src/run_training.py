@@ -10,6 +10,7 @@ import torch
 import tqdm
 
 import agents
+import analysis
 import data.container
 import data.preprocessing
 import environment
@@ -104,7 +105,7 @@ def run_training(config: ExperimentConfigSchema):
             num_steps_per_episode=math.ceil(
                 collector.env._num_time_steps
                 * config.train_environment.batch_size
-                / config.training.frames_per_batch
+                / config.collector.frames_per_batch
             ),
         )
 
@@ -129,6 +130,8 @@ def run_training(config: ExperimentConfigSchema):
             )
         )
 
+        # Analysis
+        metrics_to_log.update(analysis.analyse(config.evaluation.output_path))
         logger.log_metrics(wandb_logger, metrics_to_log, epoch)
 
     collector.shutdown()

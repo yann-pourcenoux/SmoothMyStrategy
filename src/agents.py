@@ -31,7 +31,7 @@ def make_sac_agent(
         "activation_class": get_activation(config.activation),
         "norm_class": torch.nn.BatchNorm1d,
         "norm_kwargs": {
-            "num_features": 32
+            "num_features": config.hidden_sizes[0]
         },  # TODO: HARDCODED BECAUSE OF THE HIDDEN SIZES
     }
 
@@ -76,7 +76,7 @@ def make_sac_agent(
         "activation_class": get_activation(config.activation),
         "norm_class": torch.nn.BatchNorm1d,
         "norm_kwargs": {
-            "num_features": 32
+            "num_features": config.hidden_sizes[0]
         },  # TODO: HARDCODED BECAUSE OF THE HIDDEN SIZES
     }
 

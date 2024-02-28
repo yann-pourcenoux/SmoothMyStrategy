@@ -5,11 +5,11 @@ from loguru import logger
 
 def main():
     return_codes = {
-        "black": subprocess.run("black --check src", shell=True).returncode,
-        "isort": subprocess.run("isort --check src", shell=True).returncode,
-        "ruff": subprocess.run("ruff src", shell=True).returncode,
+        "black": subprocess.run("python -m black --check src", shell=True).returncode,
+        "isort": subprocess.run("python -m isort --check src", shell=True).returncode,
+        "ruff": subprocess.run("python -m ruff src", shell=True).returncode,
         "docformatter": subprocess.run(
-            "docformatter --black --check -r src", shell=True
+            "python -m docformatter --black --check -r src", shell=True
         ).returncode,
     }
 

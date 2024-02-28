@@ -2,15 +2,13 @@
 
 import time
 
-import matplotlib.pyplot as plt
+import pandas as pd
 import torch
 from tensordict import TensorDict
 from torchrl.envs import EnvBase
 from torchrl.envs.utils import ExplorationType, set_exploration_type
 from torchrl.modules import ProbabilisticActor
 
-import logger
-import utils
 from config.schemas import EvaluationConfigSchema
 
 
@@ -22,7 +20,7 @@ def rollout(
     """Rollout an environment according to an actor."""
     actor.eval()
     with set_exploration_type(
-        ExplorationType.MODE
+        ExplorationType.from_str(config.exploration_type)
     ), torch.no_grad(), torch.inference_mode():
         eval_rollout = eval_env.rollout(
             max_steps=config.eval_rollout_steps,
@@ -48,52 +46,39 @@ def evaluate(
     metrics_to_log["eval/reward"] = eval_reward
     metrics_to_log["timer/eval/time"] = eval_time
 
-    save_traj(eval_rollout)
+    save_traj(eval_rollout, config.output_path)
     return metrics_to_log
 
 
-def save_traj(
-    eval_rollout: TensorDict,
-) -> None:
-    # print evolution of number or shares
-    figure = plt.figure()
-    num_shares_owned = eval_rollout["next", "num_shares_owned"]
-    num_shares_owned = num_shares_owned.squeeze(-1)
-    if len(num_shares_owned.shape) == 2:
-        num_shares_owned = num_shares_owned.mean(dim=0)
-    num_shares_owned = num_shares_owned.tolist()
-    figure = plt.figure()
-    plt.plot(num_shares_owned)
-    logger.log_figure(figure, "num_shares_owned")
-    plt.close(figure)
+def save_traj(eval_rollout: TensorDict, output_path: str) -> None:
+    """Save trajectory to file."""
 
-    # print number or shares bought/sold
-    figure = plt.figure()
-    num_shares_owned = eval_rollout["action"]
-    num_shares_owned = num_shares_owned.squeeze(-1)
-    if len(num_shares_owned.shape) == 2:
-        num_shares_owned = num_shares_owned.mean(dim=0)
-    num_shares_owned = num_shares_owned.tolist()
-    figure = plt.figure()
-    plt.plot(num_shares_owned)
-    logger.log_figure(figure, "bought_sold_shares")
-    plt.close(figure)
+    num_shares_owned = eval_rollout["num_shares_owned"]
+    actions = eval_rollout["action"]
+    close_prices = eval_rollout["close"]
+    # Cash amount has a last dimension of 1 that is unused here after.
+    cash = eval_rollout["cash"][..., 0]
 
-    # print evolution of portfolio value
-    portfolio_value = utils.compute_portfolio_value(eval_rollout)
-    portfolio_value = [value / 1e6 for value in portfolio_value]
-    figure = plt.figure()
-    plt.plot(portfolio_value, label="portfolio_value")
-    # logger.log_figure(figure, "portfolio_value")
-    # plt.close(figure)
+    # Select only the first axis
+    if eval_rollout.batch_size[0] != 1:
+        raise ValueError(
+            "Only a batch size of 1 is supported in the trajectory saving."
+        )
+    num_shares_owned = num_shares_owned[0]
+    actions = actions[0]
+    close_prices = close_prices[0]
+    cash = cash[0]
 
-    # print evolution of the close price
-    # figure = plt.figure()
-    close_price = eval_rollout["next", "close"]
-    close_price = close_price.squeeze(0, -1)
-    close_price = close_price / close_price[0]
-    close_price = close_price.tolist()
-    plt.plot(close_price, label="close_price")
-    plt.legend()
-    logger.log_figure(figure, "close_price")
-    plt.close(figure)
+    columns = {"cash": cash.cpu().numpy()}
+    for ticker_idx, (close_price, action, shares_ticker) in enumerate(
+        zip(
+            torch.unbind(close_prices, dim=-1),
+            torch.unbind(actions, dim=-1),
+            torch.unbind(num_shares_owned, dim=-1),
+        )
+    ):
+        columns[f"close_{ticker_idx}"] = close_price.cpu().numpy()
+        columns[f"action_{ticker_idx}"] = action.cpu().numpy()
+        columns[f"shares_{ticker_idx}"] = shares_ticker.cpu().numpy()
+
+    pd.DataFrame.from_dict(columns).to_csv(output_path, index=False)

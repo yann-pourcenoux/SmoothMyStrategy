@@ -84,12 +84,10 @@ class TradingEnv(EnvBase):
             return TensorDict(
                 {
                     **self._get_state_of_day(self._day, tensordict.shape),
-                    "cash_amount": tensordict["cash_amount"],
+                    "cash": tensordict["cash"],
                     "num_shares_owned": tensordict["num_shares_owned"],
-                    "reward": torch.zeros_like(tensordict["cash_amount"]),
-                    "done": torch.ones_like(
-                        tensordict["cash_amount"], dtype=torch.bool
-                    ),
+                    "reward": torch.zeros_like(tensordict["cash"]),
+                    "done": torch.ones_like(tensordict["cash"], dtype=torch.bool),
                 },
                 batch_size=tensordict.shape,
             )
@@ -97,12 +95,12 @@ class TradingEnv(EnvBase):
         actions = tensordict["action"] * 100
 
         # Compute portfolio value
-        portfolio_value = tensordict["cash_amount"] + torch.sum(
+        portfolio_value = tensordict["cash"] + torch.sum(
             tensordict["num_shares_owned"] * tensordict["close"], dim=-1, keepdim=True
         )
 
         new_num_shares_owned = tensordict["num_shares_owned"].clone()
-        new_cash_amount = tensordict["cash_amount"].clone()
+        new_cash = tensordict["cash"].clone()
 
         sorted_indices = torch.argsort(actions, dim=-1, descending=False)
         for indices in torch.t(sorted_indices):
@@ -114,7 +112,7 @@ class TradingEnv(EnvBase):
 
             with torch.no_grad():
                 min_num_shares_action = -num_shares_owned
-                max_num_shares_action = new_cash_amount // price_share
+                max_num_shares_action = new_cash // price_share
 
             num_shares_action = torch.clamp(
                 input=torch.gather(actions, dim=-1, index=indices),
@@ -123,7 +121,7 @@ class TradingEnv(EnvBase):
             )
 
             num_shares_owned += num_shares_action
-            new_cash_amount -= price_share * num_shares_action
+            new_cash -= price_share * num_shares_action
             new_num_shares_owned.scatter_(dim=-1, index=indices, src=num_shares_owned)
 
         self._day += 1
@@ -131,15 +129,15 @@ class TradingEnv(EnvBase):
         out = TensorDict(
             {
                 **self._get_state_of_day(self._day, tensordict.shape),
-                "cash_amount": new_cash_amount,
+                "cash": new_cash,
                 "num_shares_owned": new_num_shares_owned,
-                "done": torch.zeros_like(tensordict["cash_amount"], dtype=torch.bool),
+                "done": torch.zeros_like(tensordict["cash"], dtype=torch.bool),
             },
             batch_size=tensordict.shape,
         )
 
         # Compute reward
-        new_portfolio_value = new_cash_amount + torch.sum(
+        new_portfolio_value = new_cash + torch.sum(
             new_num_shares_owned * out["close"], dim=-1, keepdim=True
         )
         reward = torch.log(new_portfolio_value / portfolio_value)
@@ -167,15 +165,13 @@ class TradingEnv(EnvBase):
         # Take only the distribution of shares
         distribution = distribution[..., :-1]
         # Compute the number of shares
-        num_shares_owned = torch.floor(
-            distribution * self._config.cash_amount / out["close"]
-        )
+        num_shares_owned = torch.floor(distribution * self._config.cash / out["close"])
         # Update the cash amount
-        cash_amount = self._config.cash_amount - torch.sum(
+        cash = self._config.cash - torch.sum(
             num_shares_owned * out["close"], dim=-1, keepdim=True
         )
 
-        out["cash_amount"] = cash_amount
+        out["cash"] = cash
         out["num_shares_owned"] = num_shares_owned
         return out
 
@@ -194,7 +190,7 @@ class TradingEnv(EnvBase):
         }
         self.observation_spec = CompositeSpec(
             {
-                "cash_amount": UnboundedContinuousTensorSpec(
+                "cash": UnboundedContinuousTensorSpec(
                     shape=self.batch_size + (1,),
                     device=self.device,
                 ),

@@ -53,7 +53,7 @@ class EnvironmentConfigSchema:
     """Configuration schema for the environment."""
 
     batch_size: int | None = None
-    cash_amount: float = 1e6
+    cash: float = 1e6
     fixed_initial_distribution: bool = False
 
 
@@ -105,8 +105,9 @@ class OptimizerConfigSchema:
 class EvaluationConfigSchema:
     """Configuration schema for the evaluation."""
 
-    eval_iter: int = 25000
     eval_rollout_steps: int = 1000
+    exploration_type: str = "mode"
+    output_path: str = "evaluation_logs.csv"
 
 
 @pydantic.dataclasses.dataclass
@@ -115,7 +116,6 @@ class TrainingConfigSchema:
 
     num_epochs: int = 100
     num_steps_per_epoch: int = 1000
-    frames_per_batch: int = 1000
 
 
 @pydantic.dataclasses.dataclass
