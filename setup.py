@@ -9,6 +9,7 @@ DS_PKGS = [
 ]
 FIN_PKG = [
     "stockstats~=0.6.2",
+    "quantstats~=0.0.62",
 ]
 RL_PKGS = [
     "tensordict~=0.3.0",
@@ -34,6 +35,7 @@ UTILS_PKGS = [
     "hydra-core~=1.3.2",
 ]
 VIZ_PKGS = [
+    "plotly~=5.19.0",
     "seaborn~=0.12.2",
     "wandb==0.15.0",
 ]

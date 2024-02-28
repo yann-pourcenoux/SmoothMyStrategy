@@ -4,25 +4,22 @@ defaults:
 
 loading:
   tickers:
-    - AAPL
+    - FAKE
 
 agent:
   hidden_sizes:
-    - 32
-    - 32
-    - 32
-    - 32
+    - 64
+    - 64
 train_environment:
-  batch_size: 64
+  batch_size: 512
 
 collector:
   frames_per_batch: 5000
   total_frames: -1
 
 training:
-  num_epochs: 10
+  num_epochs: 2
   num_steps_per_epoch: 100
-  frames_per_batch: 1000
 
 replay_buffer:
   buffer_size: 10000000
@@ -30,7 +27,6 @@ replay_buffer:
   buffer_scratch_dir: /workspaces/Finance/outputs/scratch
 
 evaluation:
-  eval_iter: 1
   eval_rollout_steps: 10000
 
 preprocessing:
@@ -45,7 +41,7 @@ preprocessing:
     - log-ret_-7_s
     - log-ret_-8_s
     - log-ret_-9_s
-  start_date: 2010-01-01
+  start_date: 2020-01-01
 
 rest:
   device: cuda
