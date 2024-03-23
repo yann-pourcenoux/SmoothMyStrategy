@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objs as go
-
-# import quantstats as qs
+import quantstats as qs
+import wandb
 
 
 def add_portfolio_value(df: pd.DataFrame) -> None:
@@ -70,8 +70,31 @@ def analyse(path_to_csv: str) -> Dict[str, float]:
     df = pd.read_csv(path_to_csv)
     add_portfolio_value(df)
 
-    # daily_returns = compute_daily_returns(df["portfolio_value"])
-    # qs.reports.html(returns=daily_returns, output='report.html')
+    metrics_to_log = {"final_value": df["portfolio_value"].iloc[-1]}
+
+    daily_returns = compute_daily_returns(df["portfolio_value"])
+    qs.reports.html(returns=daily_returns, output="report.html")
+    wandb.log({"performance_report": wandb.Html(open("report.html"))})
+
+    metrics_to_log.update(
+        {
+            "sharpe_ratio": qs.stats.sharpe(daily_returns),
+            "sortino_ratio": qs.stats.sortino(daily_returns),
+            "cagr": qs.stats.cagr(daily_returns),
+            "max_drawdown": qs.stats.max_drawdown(daily_returns),
+            "calmar_ratio": qs.stats.calmar(daily_returns),
+            "tail_ratio": qs.stats.tail_ratio(daily_returns),
+            "common_sense_ratio": qs.stats.common_sense_ratio(daily_returns),
+            "value_at_risk": qs.stats.value_at_risk(daily_returns),
+            "conditional_value_at_risk": qs.stats.conditional_value_at_risk(
+                daily_returns
+            ),
+            "information_ratio": qs.stats.information_ratio(
+                daily_returns, benchmark=daily_returns
+            ),
+            "annual_volatility": qs.stats.volatility(daily_returns, annualize=True),
+        }
+    )
 
     # fig = plot_evolutions(df)
     # fig.show()
@@ -82,4 +105,4 @@ def analyse(path_to_csv: str) -> Dict[str, float]:
     # fig = plot_actions(df)
     # fig.show()
 
-    return {"final_value": df["portfolio_value"].iloc[-1]}
+    return metrics_to_log
