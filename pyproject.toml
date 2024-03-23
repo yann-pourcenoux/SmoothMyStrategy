@@ -1,3 +1,4 @@
 [tool.isort]
 profile = "black"
+known_third_party = ["wandb"]
 line_length = 88
