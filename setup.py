@@ -28,11 +28,11 @@ TEST_PKGS = [
 ]
 UTILS_PKGS = [
     "GitPython~=3.1.42",
+    "hydra-core~=1.3.2",
     "icecream~=2.1.3",
     "jupyter~=1.0.0",
     "loguru~=0.7.2",
     "pydantic~=2.6.4",
-    "hydra-core~=1.3.2",
 ]
 VIZ_PKGS = [
     "plotly~=5.20.0",

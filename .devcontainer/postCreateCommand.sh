@@ -14,3 +14,6 @@ git config --global --add safe.directory /workspaces/Finance
 
 # Install pre-commit hooks
 pre-commit install
+
+# Download the torch_rl examples
+bash tools/install_utils/download_torchrl_implementations.sh

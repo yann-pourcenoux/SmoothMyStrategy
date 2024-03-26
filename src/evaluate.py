@@ -1,15 +1,18 @@
 """Module to evaluate an agent."""
 
+import os
 import time
 
 import pandas as pd
 import torch
+import wandb
 from tensordict import TensorDict
 from torchrl.envs import EnvBase
 from torchrl.envs.utils import ExplorationType, set_exploration_type
 from torchrl.modules import ProbabilisticActor
 
 from config.schemas import EvaluationConfigSchema
+from constants import EVALUATION_LOGS_FILENAME
 
 
 def rollout(
@@ -46,11 +49,11 @@ def evaluate(
     metrics_to_log["eval/reward"] = eval_reward
     metrics_to_log["timer/eval/time"] = eval_time
 
-    save_traj(eval_rollout, config.output_path)
+    save_traj(eval_rollout)
     return metrics_to_log
 
 
-def save_traj(eval_rollout: TensorDict, output_path: str) -> None:
+def save_traj(eval_rollout: TensorDict) -> None:
     """Save trajectory to file."""
 
     num_shares_owned = eval_rollout["num_shares_owned"]
@@ -81,4 +84,5 @@ def save_traj(eval_rollout: TensorDict, output_path: str) -> None:
         columns[f"action_{ticker_idx}"] = action.cpu().numpy()
         columns[f"shares_{ticker_idx}"] = shares_ticker.cpu().numpy()
 
+    output_path = os.path.join(wandb.run.dir, EVALUATION_LOGS_FILENAME)
     pd.DataFrame.from_dict(columns).to_csv(output_path, index=False)

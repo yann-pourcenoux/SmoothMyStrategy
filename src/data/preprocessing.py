@@ -115,6 +115,11 @@ def clean_data(dataframe: pd.DataFrame) -> pd.DataFrame:
     merged_closes = df.pivot_table(index="date", columns="ticker", values="close")
     merged_closes = merged_closes.dropna(axis=1)
     tics = merged_closes.columns
+
+    # Fix this by not dropping but filling the NaNs value
+    # which are probably linked to not having old enough data
+    assert set(tics) == set(df.ticker.unique()), "Some tickers have missing values."
+
     df = df[df.ticker.isin(tics)]
 
     return df

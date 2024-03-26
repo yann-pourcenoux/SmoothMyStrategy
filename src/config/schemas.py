@@ -5,6 +5,8 @@ from dataclasses import field
 import pydantic
 from hydra.core.config_store import ConfigStore
 
+from environments.config import EnvironmentConfigSchema
+
 
 @pydantic.dataclasses.dataclass
 class DataPreprocessingConfigSchema:
@@ -46,15 +48,6 @@ class LoggingConfigSchema:
     experiment: str | None = None
     project: str = "debug"
     online: bool = True
-
-
-@pydantic.dataclasses.dataclass
-class EnvironmentConfigSchema:
-    """Configuration schema for the environment."""
-
-    batch_size: int | None = None
-    cash: float = 1e6
-    fixed_initial_distribution: bool = False
 
 
 @pydantic.dataclasses.dataclass
@@ -107,7 +100,6 @@ class EvaluationConfigSchema:
 
     eval_rollout_steps: int = 1000
     exploration_type: str = "mode"
-    output_path: str = "evaluation_logs.csv"
 
 
 @pydantic.dataclasses.dataclass

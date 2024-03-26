@@ -28,4 +28,4 @@ repos:
     rev: v1.7.5
     hooks:
       - id: docformatter
-        args: [--black]
+        args: [--black, -i]

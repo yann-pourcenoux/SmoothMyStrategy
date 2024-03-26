@@ -22,6 +22,9 @@ def make_collector(
     seed: int = 0,
 ) -> SyncDataCollector:
     """Make collector."""
+    # Set actor to eval mode
+    actor_model_explore.eval()
+
     collector = SyncDataCollector(
         train_env,
         actor_model_explore,
@@ -32,6 +35,9 @@ def make_collector(
         policy_device=device,
     )
     collector.set_seed(seed)
+
+    # Set actor back to train mode
+    actor_model_explore.train()
     return collector
 
 
@@ -87,7 +93,11 @@ def collect_data(
     collector: SyncDataCollector,
     replay_buffer: TensorDictPrioritizedReplayBuffer | TensorDictReplayBuffer,
     num_steps_per_episode: int,
-):
+    advantage_module: str = "",
+) -> dict[str, float]:
+    # Set the policy in eval mode
+    collector.policy.eval()
+
     sampling_start = time.time()
     for i, tensordict in tqdm.tqdm(
         enumerate(collector),
@@ -102,6 +112,11 @@ def collect_data(
 
         # Update weights of the inference policy
         collector.update_policy_weights_()
+
+        # Compute the advantage
+        if advantage_module:
+            with torch.no_grad():
+                tensordict = advantage_module(tensordict)
 
         # Add to replay buffer
         tensordict = tensordict.reshape(-1)
@@ -124,4 +139,7 @@ def collect_data(
 
     sampling_time = time.time() - sampling_start
     metrics_to_log["timer/train/sampling_time"] = sampling_time
+
+    # Set the policy back to train mode
+    collector.policy.train()
     return metrics_to_log

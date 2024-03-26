@@ -8,11 +8,10 @@ import torch
 from tensordict import TensorDict
 from torchrl.data import BoundedTensorSpec, CompositeSpec, UnboundedContinuousTensorSpec
 from torchrl.envs import CatTensors, Compose, DoubleToFloat, EnvBase, TransformedEnv
-from torchrl.envs.transforms import InitTracker, RewardSum, StepCounter
-from torchrl.envs.utils import check_env_specs
+from torchrl.envs.transforms import InitTracker, RewardSum, StepCounter, VecNorm
 
-from config.schemas import EnvironmentConfigSchema
 from data.container import DataContainer
+from environments.config import EnvironmentConfigSchema
 
 
 class TradingEnv(EnvBase):
@@ -77,6 +76,23 @@ class TradingEnv(EnvBase):
         return state
 
     def _step(self, tensordict: TensorDict):
+        """Perform the step of the environment."""
+        tensordict["action"] = self._process_actions(tensordict)
+        return self._perform_trading_action(tensordict)
+
+    def _process_actions(self, tensordict: TensorDict):
+        return tensordict["action"] * 100
+
+    def _get_action_spec(self):
+        return BoundedTensorSpec(
+            shape=self.batch_size + (self._num_tickers,),
+            low=-1,
+            high=1,
+            device=self.device,
+        )
+
+    def _perform_trading_action(self, tensordict: TensorDict):
+        """Perform the trading action."""
         # Check if done
         done = self._day == self._num_time_steps - 1
 
@@ -92,7 +108,7 @@ class TradingEnv(EnvBase):
                 batch_size=tensordict.shape,
             )
 
-        actions = tensordict["action"] * 100
+        actions = tensordict["action"]
 
         # Compute portfolio value
         portfolio_value = tensordict["cash"] + torch.sum(
@@ -205,12 +221,7 @@ class TradingEnv(EnvBase):
         )
         self.state_spec = self.observation_spec.clone()
 
-        self.action_spec = BoundedTensorSpec(
-            shape=self.batch_size + (self._num_tickers,),
-            low=-1,
-            high=1,
-            device=self.device,
-        )
+        self.action_spec = self._get_action_spec()
 
         self.reward_spec = UnboundedContinuousTensorSpec(
             shape=self.batch_size + (1,),
@@ -233,7 +244,7 @@ def _apply_transform_observation(env: TradingEnv) -> TransformedEnv:
     return transformed_env
 
 
-def _apply_sac_transforms(env: EnvBase) -> TransformedEnv:
+def _apply_transforms(env: EnvBase) -> TransformedEnv:
     """Apply the necessary transforms to train using SAC."""
     transformed_env = TransformedEnv(
         env=env,
@@ -242,28 +253,15 @@ def _apply_sac_transforms(env: EnvBase) -> TransformedEnv:
             StepCounter(),
             DoubleToFloat(),
             RewardSum(),
+            VecNorm(),
         ),
         device=env.device,
     )
     return transformed_env
 
 
-def get_sac_environment(
-    config: EnvironmentConfigSchema,
-    data_container: DataContainer,
-    seed: int = 0,
-    device: str = "cpu",
-) -> TransformedEnv:
+def apply_transforms(env: EnvBase) -> TransformedEnv:
     """Get the environment to train using SAC."""
-    env: EnvBase = TradingEnv(
-        config=config,
-        data_container=data_container,
-        seed=seed,
-        device=device,
-    )
-    check_env_specs(env, seed=seed)
     env = _apply_transform_observation(env)
-    check_env_specs(env, seed=seed)
-    env = _apply_sac_transforms(env)
-    check_env_specs(env, seed=seed)
+    env = _apply_transforms(env)
     return env
