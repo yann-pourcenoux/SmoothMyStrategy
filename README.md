@@ -7,10 +7,24 @@ This will be achieved by using Deep Learning and Reinforcement Learning using Py
 
 ## Setup
 
+### Install the package
+
 You can install the package by doing the following command:
 
 ```shell
 pip install -e .
+```
+
+### Download TorchRL examples
+
+```shell
+bash tools/install_utils/download_torchrl_implementations.sh
+```
+
+You can install the dependencies to run on mujoco env by doing:
+
+```shell
+bash tools/install_utils/install_mujoco.sh
 ```
 
 ## Data

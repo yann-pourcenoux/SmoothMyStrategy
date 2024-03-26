@@ -13,7 +13,7 @@ import agents
 import analysis
 import data.container
 import data.preprocessing
-import environment
+import environments.trading
 import evaluate
 import logger
 import losses
@@ -21,6 +21,7 @@ import optimizers
 import train
 import utils
 from config.schemas import ExperimentConfigSchema
+from environments.trading import TradingEnv
 
 
 @hydra.main(version_base=None, config_path="config", config_name="base_experiment")
@@ -52,17 +53,21 @@ def run_training(config: ExperimentConfigSchema):
     )
 
     # Create environments
-    train_env = environment.get_sac_environment(
-        config=config.train_environment,
-        data_container=data_container,
-        seed=config.rest.seed,
-        device=device,
+    train_env = environments.trading.apply_transforms(
+        env=TradingEnv(
+            config=config.train_environment,
+            data_container=data_container,
+            seed=config.rest.seed,
+            device=device,
+        ),
     )
-    eval_env = environment.get_sac_environment(
-        config=config.eval_environment,
-        data_container=data_container,
-        seed=config.rest.seed,
-        device=device,
+    eval_env = environments.trading.apply_transforms(
+        env=TradingEnv(
+            config=config.eval_environment,
+            data_container=data_container,
+            seed=config.rest.seed,
+            device=device,
+        ),
     )
 
     # Create agent
@@ -131,7 +136,7 @@ def run_training(config: ExperimentConfigSchema):
         )
 
         # Analysis
-        metrics_to_log.update(analysis.analyse(config.evaluation.output_path))
+        metrics_to_log.update(analysis.analyse())
         logger.log_metrics(wandb_logger, metrics_to_log, epoch)
 
     collector.shutdown()

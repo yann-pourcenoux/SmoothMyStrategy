@@ -1,5 +1,6 @@
 """Module to analyse the performance of a model."""
 
+import os
 from typing import Dict
 
 import numpy as np
@@ -8,6 +9,8 @@ import plotly.express as px
 import plotly.graph_objs as go
 import quantstats as qs
 import wandb
+
+from constants import EVALUATION_LOGS_FILENAME, METRICS_REPORT_FILENAME
 
 
 def add_portfolio_value(df: pd.DataFrame) -> None:
@@ -65,16 +68,19 @@ def compute_daily_returns(portfolio_value: pd.Series) -> pd.Series:
     return daily_returns
 
 
-def analyse(path_to_csv: str) -> Dict[str, float]:
+def analyse() -> Dict[str, float]:
     """Analyse the performance from a csv and plot."""
-    df = pd.read_csv(path_to_csv)
+    df = pd.read_csv(os.path.join(wandb.run.dir, EVALUATION_LOGS_FILENAME))
     add_portfolio_value(df)
 
     metrics_to_log = {"final_value": df["portfolio_value"].iloc[-1]}
 
     daily_returns = compute_daily_returns(df["portfolio_value"])
-    qs.reports.html(returns=daily_returns, output="report.html")
-    wandb.log({"performance_report": wandb.Html(open("report.html"))})
+
+    report_path = os.path.join(wandb.run.dir, METRICS_REPORT_FILENAME)
+    qs.reports.html(returns=daily_returns, output=report_path)
+    with open(report_path) as html_report:
+        wandb.log({"performance_report": wandb.Html(html_report)})
 
     metrics_to_log.update(
         {

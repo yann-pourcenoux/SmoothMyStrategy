@@ -24,21 +24,31 @@
 # - venv/
 
 before_script:
+  - apt-get update -y
+  - apt-get install -y git
   - pip install --upgrade pip
   - python --version ; pip --version # For debugging
-  - pip install .
+  - pip install -e .
   - pip freeze
 
 Code check:
   stage: test
-  image: python:3.10.13-bookworm
+  image: pytorch/pytorch:2.2.1-cuda12.1-cudnn8-runtime
   only:
     - merge_requests
   script:
-    - python src/tools/run_style.py
+    - bash tools/ci/run_style.sh
     # - pip install ruff tox  # you can also use tox
     # - pip install --editable ".[test]"
     # - tox -e py,ruff
+
+Run pytest:
+  stage: test
+  image: pytorch/pytorch:2.2.1-cuda12.1-cudnn8-runtime
+  only:
+    - merge_requests
+  script:
+    - bash tools/ci/run_pytest.sh
 # run:
 #   script:
 #     - pip install .

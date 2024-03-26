@@ -14,10 +14,9 @@
   // "forwardPorts": [],
   // Uncomment the next line to run commands after the container is created.
   // "postCreateCommand": "cat /etc/os-release",
-  // Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
-  // "remoteUser": "vscode",
   "runArgs": ["--gpus", "all", "--platform", "linux/amd64"],
   "containerUser": "vscode",
+  "remoteUser": "vscode",
   "updateRemoteUserUID": true,
   // Configure tool-specific properties.
   "customizations": {
