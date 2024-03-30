@@ -5,7 +5,7 @@ from typing import Any
 import wandb
 from torchrl.record.loggers.wandb import WandbLogger
 
-from config.schemas import LoggingConfigSchema
+from config.schemas import ExperimentConfigSchema
 
 
 def log_metrics(logger, metrics, step):
@@ -17,12 +17,13 @@ def log_figure(figure: Any, title: str):
     wandb.log({title: wandb.Image(figure)})
 
 
-def get_logger(config: LoggingConfigSchema) -> WandbLogger:
+def get_logger(config: ExperimentConfigSchema) -> WandbLogger:
     """Get a wandb logger."""
     logger = WandbLogger(
-        exp_name=config.experiment,
-        offline=not config.online,
-        save_dir=config.logging_directory,
-        project=config.project,
+        exp_name=config.logging.experiment,
+        offline=not config.logging.online,
+        save_dir=config.logging.logging_directory,
+        project=config.logging.project,
+        config=config,
     )
     return logger
