@@ -45,7 +45,7 @@ def run_training(config: ExperimentConfigSchema):
     np.random.seed(config.rest.seed)
 
     # Create logger
-    wandb_logger = logger.get_logger(config.logging)
+    wandb_logger = logger.get_logger(config)
 
     # Get environments
     data_container = data.container.DataContainer(
