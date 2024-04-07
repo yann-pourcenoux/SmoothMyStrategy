@@ -102,7 +102,12 @@ def run_training(config: ExperimentConfigSchema):
     )
 
     # Main loop
-    for epoch in tqdm.tqdm(range(config.training.num_epochs), unit="epoch", leave=True):
+    for epoch in tqdm.tqdm(
+        range(config.training.num_epochs),
+        unit="epoch",
+        leave=True,
+        desc="Training status",
+    ):
         # Collect data
         metrics_to_log = utils.collect_data(
             collector,

@@ -14,13 +14,13 @@ def make_sac_optimizer(
 
     optimizer_actor = optim.Adam(
         actor_params,
-        lr=config.learning_rate,
+        lr=config.actor_lr,
         weight_decay=config.weight_decay,
         eps=config.adam_eps,
     )
     optimizer_critic = optim.Adam(
         critic_params,
-        lr=config.learning_rate,
+        lr=config.critic_lr,
         weight_decay=config.weight_decay,
         eps=config.adam_eps,
     )
