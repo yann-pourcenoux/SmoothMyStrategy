@@ -27,10 +27,10 @@ def make_collector(
 
     collector = SyncDataCollector(
         train_env,
-        actor_model_explore,
+        policy=actor_model_explore,
         frames_per_batch=config.frames_per_batch,
         total_frames=config.total_frames,
-        storing_device="cpu",
+        storing_device=config.storage_device,
         env_device=device,
         policy_device=device,
     )
@@ -123,13 +123,10 @@ def collect_data(
         replay_buffer.extend(tensordict.cpu())
 
         # Add metrics
-        episode_end = (
-            tensordict["next", "done"] if tensordict["next", "done"].any() else False
-        )
-
+        metrics_to_log = {}
+        episode_end = tensordict["next", "done"]
         episode_rewards = tensordict["next", "episode_reward"][episode_end]
         # Logging
-        metrics_to_log = {}
         if len(episode_rewards) > 0:
             episode_length = tensordict["next", "step_count"][episode_end]
             metrics_to_log["train/reward"] = episode_rewards.mean().item()

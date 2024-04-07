@@ -16,6 +16,7 @@ repos:
     rev: v0.0.280
     hooks:
       - id: ruff
+        args: [--fix]
 
   # Prettier (for json and yaml)
   - repo: https://github.com/pre-commit/mirrors-prettier

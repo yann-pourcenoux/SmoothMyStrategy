@@ -39,6 +39,7 @@ def evaluate(
     eval_env: EnvBase,
     actor: ProbabilisticActor,
     config: EvaluationConfigSchema,
+    critic=None,
 ):
     metrics_to_log = {}
     eval_start = time.time()
@@ -46,8 +47,16 @@ def evaluate(
     eval_time = time.time() - eval_start
 
     eval_reward = eval_rollout["next", "reward"].sum(-2).mean().item()
+    metrics_to_log["eval/mean_action"] = eval_rollout["action"].mean().item()
     metrics_to_log["eval/reward"] = eval_reward
     metrics_to_log["timer/eval/time"] = eval_time
+
+    critic.eval()
+    with torch.no_grad():
+        predictions = critic(eval_rollout)
+    critic.train()
+
+    metrics_to_log["eval/mean_state_value"] = predictions["state_value"].mean().item()
 
     save_traj(eval_rollout)
     return metrics_to_log
