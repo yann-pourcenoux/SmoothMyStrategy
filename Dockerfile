@@ -1,5 +1,5 @@
 # Use the official PyTorch base image
-FROM pytorch/pytorch:2.2.1-cuda12.1-cudnn8-runtime
+FROM pytorch/pytorch:2.2.2-cuda12.1-cudnn8-runtime
 
 # Install git
 RUN apt-get update -y
