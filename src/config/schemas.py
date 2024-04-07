@@ -88,10 +88,12 @@ class ReplayBufferConfigSchema:
 class OptimizerConfigSchema:
     """Configuration schema for the optimizer."""
 
-    learning_rate: float = 3.0e-4
+    actor_lr: float = 3.0e-4
+    critic_lr: float = 3.0e-4
+    alpha_lr: float = 3.0e-4
+
     weight_decay: float = 0.0
     adam_eps: float = 1.0e-8
-    alpha_lr: float = 3.0e-4
 
 
 @pydantic.dataclasses.dataclass

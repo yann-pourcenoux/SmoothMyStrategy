@@ -23,7 +23,7 @@ def main(period: float = 10) -> None:
     df["High"] = price
     df["Low"] = price
     df["Close"] = price
-    df.to_csv(os.path.join(DATASET_PATH, "FAKE.csv"), index=False)
+    df.to_csv(os.path.join(DATASET_PATH, f"COS_{period}.csv"), index=False)
 
     df["Close"][:100].plot()
     plt.show()
