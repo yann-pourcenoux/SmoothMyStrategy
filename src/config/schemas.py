@@ -116,6 +116,7 @@ class CollectorConfigSchema:
 
     total_frames: int = -1
     frames_per_batch: int = 1280
+    storage_device: str = "cpu"
 
 
 @pydantic.dataclasses.dataclass
