@@ -33,7 +33,7 @@ before_script:
 
 Code check:
   stage: test
-  image: pytorch/pytorch:2.2.1-cuda12.1-cudnn8-runtime
+  image: pytorch/pytorch:2.2.2-cuda12.1-cudnn8-runtime
   only:
     - merge_requests
   script:
@@ -44,7 +44,7 @@ Code check:
 
 Run pytest:
   stage: test
-  image: pytorch/pytorch:2.2.1-cuda12.1-cudnn8-runtime
+  image: pytorch/pytorch:2.2.2-cuda12.1-cudnn8-runtime
   only:
     - merge_requests
   script:

@@ -14,6 +14,7 @@ FIN_PKG = [
 RL_PKGS = [
     "tensordict~=0.3.1",
     "torchrl~=0.3.1",
+    "torch==2.2.2",
 ]
 STYLE_PKGS = [
     "black~=23.7.0",
