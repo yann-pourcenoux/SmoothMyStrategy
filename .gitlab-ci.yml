@@ -26,6 +26,8 @@
 before_script:
   - apt-get update -y
   - apt-get install -y git
+  - git fetch
+  - git rebase origin/main
   - pip install --upgrade pip
   - python --version ; pip --version # For debugging
   - pip install -e .
