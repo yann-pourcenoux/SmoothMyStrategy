@@ -93,20 +93,8 @@ class TradingEnv(EnvBase):
 
     def _perform_trading_action(self, tensordict: TensorDict):
         """Perform the trading action."""
-        # Check if done
-        done = self._day == self._num_time_steps - 1
-
-        if done:
-            return TensorDict(
-                {
-                    **self._get_state_of_day(self._day, tensordict.shape),
-                    "cash": tensordict["cash"],
-                    "num_shares_owned": tensordict["num_shares_owned"],
-                    "reward": torch.zeros_like(tensordict["cash"]),
-                    "done": torch.ones_like(tensordict["cash"], dtype=torch.bool),
-                },
-                batch_size=tensordict.shape,
-            )
+        # Check if done, it will be used at the bottom
+        done = self._day == self._num_time_steps - 2
 
         actions = tensordict["action"]
 
@@ -147,7 +135,6 @@ class TradingEnv(EnvBase):
                 **self._get_state_of_day(self._day, tensordict.shape),
                 "cash": new_cash,
                 "num_shares_owned": new_num_shares_owned,
-                "done": torch.zeros_like(tensordict["cash"], dtype=torch.bool),
             },
             batch_size=tensordict.shape,
         )
@@ -158,6 +145,12 @@ class TradingEnv(EnvBase):
         )
         reward = torch.log(new_portfolio_value / portfolio_value)
         out["reward"] = reward
+
+        # Set the done and terminated
+        if done:
+            out["done"] = torch.ones_like(tensordict["cash"], dtype=torch.bool)
+        else:
+            out["done"] = torch.zeros_like(tensordict["cash"], dtype=torch.bool)
 
         return out
 

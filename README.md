@@ -24,7 +24,7 @@ bash tools/install_utils/download_torchrl_implementations.sh
 You can install the dependencies to run on mujoco env by doing:
 
 ```shell
-bash tools/install_utils/install_mujoco.sh
+source tools/install_utils/install_mujoco.sh
 ```
 
 ## Data
