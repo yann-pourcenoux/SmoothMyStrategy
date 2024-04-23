@@ -3,6 +3,7 @@
 from dataclasses import field
 
 import pydantic
+import torch
 from hydra.core.config_store import ConfigStore
 
 from environments.config import EnvironmentConfigSchema
@@ -17,8 +18,8 @@ class DataPreprocessingConfigSchema:
     """
 
     technical_indicators: list[str] = field(default_factory=list)
-    start_date: str | None = None
-    end_date: str | None = None
+    start_date: str | None = "${train_environment.start_date}"
+    end_date: str | None = "${eval_environment.end_date}"
 
 
 @pydantic.dataclasses.dataclass
@@ -30,14 +31,6 @@ class DataLoaderConfigSchema:
     """
 
     tickers: list[str] = field(default_factory=list)
-
-
-@pydantic.dataclasses.dataclass
-class RestConfigSchema:
-    """Configuration fields for all the rest just to test."""
-
-    seed: int = 0
-    device: str | None = None
 
 
 @pydantic.dataclasses.dataclass
@@ -89,8 +82,8 @@ class OptimizerConfigSchema:
     """Configuration schema for the optimizer."""
 
     actor_lr: float = 3.0e-4
-    critic_lr: float = 3.0e-4
-    alpha_lr: float = 3.0e-4
+    critic_lr: float = "${optimizer.actor_lr}"
+    alpha_lr: float = "${optimizer.actor_lr}"
 
     weight_decay: float = 0.0
     adam_eps: float = 1.0e-8
@@ -100,7 +93,7 @@ class OptimizerConfigSchema:
 class EvaluationConfigSchema:
     """Configuration schema for the evaluation."""
 
-    eval_rollout_steps: int = 1000
+    eval_rollout_steps: int = 1_000_000
     exploration_type: str = "mode"
 
 
@@ -117,29 +110,49 @@ class CollectorConfigSchema:
     """Configuration schema for the collector."""
 
     total_frames: int = -1
-    frames_per_batch: int = 1280
+    frames_per_batch: int = 1024
     storage_device: str = "cpu"
+
+
+@pydantic.dataclasses.dataclass
+class AnalysisConfigSchema:
+    """Configuration schema for the analysis."""
 
 
 @pydantic.dataclasses.dataclass
 class ExperimentConfigSchema:
     """Configuration schema to train a model."""
 
-    agent: AgentConfigSchema = AgentConfigSchema()
-    collector: CollectorConfigSchema = CollectorConfigSchema()
-    eval_environment: EnvironmentConfigSchema = EnvironmentConfigSchema(
-        batch_size=1, fixed_initial_distribution=True
-    )
-    evaluation: EvaluationConfigSchema = EvaluationConfigSchema()
     loading: DataLoaderConfigSchema = DataLoaderConfigSchema()
-    logging: LoggingConfigSchema = LoggingConfigSchema()
+    preprocessing: DataPreprocessingConfigSchema = DataPreprocessingConfigSchema()
+
+    train_environment: EnvironmentConfigSchema = EnvironmentConfigSchema(
+        end_date="${eval_environment.start_date}",
+    )
+    eval_environment: EnvironmentConfigSchema = EnvironmentConfigSchema(
+        batch_size=1,
+        fixed_initial_distribution=True,
+        start_date="${train_environment.end_date}",
+    )
+
+    collector: CollectorConfigSchema = CollectorConfigSchema()
+    replay_buffer: ReplayBufferConfigSchema = ReplayBufferConfigSchema()
+
+    agent: AgentConfigSchema = AgentConfigSchema()
     loss: LossConfigSchema = LossConfigSchema()
     optimizer: OptimizerConfigSchema = OptimizerConfigSchema()
-    preprocessing: DataPreprocessingConfigSchema = DataPreprocessingConfigSchema()
-    replay_buffer: ReplayBufferConfigSchema = ReplayBufferConfigSchema()
-    rest: RestConfigSchema = RestConfigSchema()
-    train_environment: EnvironmentConfigSchema = EnvironmentConfigSchema()
+
     training: TrainingConfigSchema = TrainingConfigSchema()
+    evaluation: EvaluationConfigSchema = EvaluationConfigSchema()
+    analysis: AnalysisConfigSchema | None = AnalysisConfigSchema()
+
+    logging: LoggingConfigSchema = LoggingConfigSchema()
+    seed: int = 0
+    device: str | None = None
+
+    def __post_init__(self):
+        if self.device is None:
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 cs = ConfigStore.instance()

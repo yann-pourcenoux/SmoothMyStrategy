@@ -12,7 +12,6 @@ class DataContainer:
 
     data: pd.DataFrame
     num_tickers: int
-    num_time_steps: int
 
     def __init__(
         self,
@@ -27,4 +26,13 @@ class DataContainer:
             config=self._preprocessing_config,
         )
         self.num_tickers = len(self._loading_config.tickers)
-        self.num_time_steps = max(self.data.index) + 1
+
+    def get_env_data(self, start_date: str | None = None, end_date: str | None = None):
+        """Get the data for the environment."""
+        df = data.preprocessing.select_time_range(self.data, start_date, end_date)
+        df.index = df.date.factorize()[0]
+        df.drop(columns=["date", "ticker"], inplace=True)
+
+        num_time_steps = max(df.index)
+
+        return df, num_time_steps

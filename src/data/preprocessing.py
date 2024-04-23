@@ -31,9 +31,6 @@ def preprocess_data(
     dataframe = select_time_range(dataframe, config.start_date, config.end_date)
     dataframe = clean_data(dataframe)
 
-    # Drop the date and ticker columns
-    dataframe.drop(columns=["date", "ticker"], inplace=True)
-
     return dataframe
 
 
@@ -62,6 +59,20 @@ def _add_technical_indicators(
         yield df
 
 
+def reset_index(dataframe: pd.DataFrame) -> pd.DataFrame:
+    """Sort the rows by date and ticker, then reset the index.
+
+    Args:
+        dataframe (pd.DataFrame): Dataframe to reset index for.
+
+    Returns:
+        pd.DataFrame: Dataframe with reset index.
+    """
+    dataframe = dataframe.sort_values(["date", "ticker"], ignore_index=True)
+    dataframe.reset_index(drop=True, inplace=True)
+    return dataframe
+
+
 def merge_dataframes(dataframe_iterator: Iterable[pd.DataFrame]) -> pd.DataFrame:
     """Merge dataframes.
 
@@ -72,8 +83,7 @@ def merge_dataframes(dataframe_iterator: Iterable[pd.DataFrame]) -> pd.DataFrame
         pd.DataFrame: Merged dataframe.
     """
     dataframe = pd.concat(dataframe_iterator, ignore_index=True)
-    dataframe = dataframe.sort_values(["date", "ticker"], ignore_index=True)
-    dataframe.reset_index(drop=True, inplace=True)
+    reset_index(dataframe)
 
     return dataframe
 
@@ -95,7 +105,7 @@ def select_time_range(
         dataframe = dataframe[dataframe.date >= pd.to_datetime(start).date()]
 
     if end is not None:
-        dataframe = dataframe[dataframe.date <= pd.to_datetime(end).date()]
+        dataframe = dataframe[dataframe.date < pd.to_datetime(end).date()]
 
     return dataframe
 

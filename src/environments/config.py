@@ -10,3 +10,5 @@ class EnvironmentConfigSchema:
     batch_size: int | None = None
     cash: float = 1e6
     fixed_initial_distribution: bool = False
+    start_date: str | None = None
+    end_date: str | None = None

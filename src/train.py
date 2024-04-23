@@ -19,6 +19,7 @@ def train(
     loss_module: LossModule,
     optimizers: tuple[optim.Optimizer, optim.Optimizer, optim.Optimizer],
     target_net_updater: SoftUpdate,
+    schedulers: list,
 ):
     optimizer_actor, optimizer_critic, optimizer_alpha = optimizers
     metrics_to_log = {}
@@ -56,6 +57,10 @@ def train(
         optimizer_alpha.zero_grad()
         alpha_loss.backward()
         optimizer_alpha.step()
+
+        for scheduler in schedulers:
+            scheduler.step()
+
         losses_values[i] = loss_td.select(
             "loss_actor", "loss_qvalue", "loss_alpha"
         ).detach()

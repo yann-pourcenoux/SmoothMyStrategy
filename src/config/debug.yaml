@@ -2,36 +2,47 @@ defaults:
   - base_experiment
   - _self_
 
+analysis: null
+
 loading:
   tickers:
     - COS_10
 
 agent:
   hidden_sizes:
-    - 16
+    - 256
+    - 256
+
 train_environment:
-  batch_size: 128
+  batch_size: 1
+  cash: 10
+  fixed_initial_distribution: False
+  start_date: 2010-01-01
+
+eval_environment:
+  cash: 10
+  start_date: 2024-01-01
+  end_date: 2024-04-01
 
 collector:
-  frames_per_batch: 5000
+  frames_per_batch: 32
   total_frames: -1
 
 training:
-  num_epochs: 100
-  num_steps_per_epoch: 1000
+  num_epochs: 20
+  num_steps_per_epoch: 2_000
 
 replay_buffer:
   buffer_size: 10000000
-  batch_size: 128
+  batch_size: 64
   buffer_scratch_dir: /workspaces/Finance/outputs/scratch
-
-evaluation:
-  eval_rollout_steps: 10000
 
 optimizer:
   actor_lr: 1e-3
-  critic_lr: 1e-3
-  alpha_lr: 1e-3
+
+logging:
+  project: debug
+  experiment: null
 
 preprocessing:
   technical_indicators:
@@ -45,8 +56,3 @@ preprocessing:
     - log-ret_-7_s
     - log-ret_-8_s
     - log-ret_-9_s
-  start_date: 2000-01-01
-
-rest:
-  device: cuda
-  seed: 0

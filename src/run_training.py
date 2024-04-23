@@ -38,11 +38,11 @@ def run_training(config: ExperimentConfigSchema):
     """Train an agent."""
 
     # Find device
-    device = utils.get_device(config.rest.device)
+    device = utils.get_device(config.device)
 
     # Set seed
-    torch.manual_seed(config.rest.seed)
-    np.random.seed(config.rest.seed)
+    torch.manual_seed(config.seed)
+    np.random.seed(config.seed)
 
     # Create logger
     wandb_logger = logger.get_logger(config)
@@ -57,7 +57,7 @@ def run_training(config: ExperimentConfigSchema):
         env=TradingEnv(
             config=config.train_environment,
             data_container=data_container,
-            seed=config.rest.seed,
+            seed=config.seed,
             device=device,
         ),
     )
@@ -65,7 +65,7 @@ def run_training(config: ExperimentConfigSchema):
         env=TradingEnv(
             config=config.eval_environment,
             data_container=data_container,
-            seed=config.rest.seed,
+            seed=config.seed,
             device=device,
         ),
     )
@@ -89,7 +89,7 @@ def run_training(config: ExperimentConfigSchema):
         actor_model_explore=exploration_policy,
         config=config.collector,
         device=device,
-        seed=config.rest.seed,
+        seed=config.seed,
     )
 
     # Create replay buffer
@@ -100,6 +100,14 @@ def run_training(config: ExperimentConfigSchema):
         loss_module=loss_module,
         config=config.optimizer,
     )
+
+    schedulers = [
+        torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer,
+            T_max=config.training.num_epochs * config.training.num_steps_per_epoch,
+        )
+        for optimizer in model_optimizers
+    ]
 
     # Main loop
     for epoch in tqdm.tqdm(
@@ -128,23 +136,29 @@ def run_training(config: ExperimentConfigSchema):
                 loss_module,
                 model_optimizers,
                 target_net_updater,
+                schedulers,
             )
         )
 
         # Evaluation
-        metrics_to_log.update(
-            evaluate.evaluate(
-                eval_env,
-                exploration_policy,
-                config.evaluation,
+        if config.evaluation is not None:
+            metrics_to_log.update(
+                evaluate.evaluate(
+                    eval_env,
+                    exploration_policy,
+                    config.evaluation,
+                )
             )
-        )
 
         # Analysis
-        metrics_to_log.update(analysis.analyse())
+        if config.analysis is not None:
+            metrics_to_log.update(analysis.analyse())
+
+        # Log the metrics
         logger.log_metrics(wandb_logger, metrics_to_log, epoch)
 
     collector.shutdown()
+    return metrics_to_log, model
 
 
 if __name__ == "__main__":

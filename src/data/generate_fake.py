@@ -16,7 +16,7 @@ def main(period: float = 10) -> None:
     df = pd.read_csv(os.path.join(DATASET_PATH, "AAPL.csv"))
 
     index = np.arange(len(df))
-    price = 2 + 0.05 * np.sin(2 * np.pi * index / period)
+    price = 1 + 0.1 * np.sin(2 * np.pi * index / period)
 
     # Replace all prices with the generated one
     df["Open"] = price

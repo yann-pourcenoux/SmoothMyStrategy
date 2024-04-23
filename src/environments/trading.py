@@ -30,10 +30,15 @@ class TradingEnv(EnvBase):
         super().__init__(device=device, batch_size=batch_size)
 
         self._config = config
-        self._data_container = data_container
-        self._env_data = data_container.data
+        self._env_data, self._num_time_steps = data_container.get_env_data(
+            config.start_date, config.end_date
+        )
         self._num_tickers = data_container.num_tickers
-        self._num_time_steps = data_container.num_time_steps
+        self.technical_indicators = (
+            data_container._preprocessing_config.technical_indicators
+        )
+
+        # Set up
         self._day = torch.zeros((), dtype=torch.int32)
         self._convert_to_list_tensors(self._env_data)
 
@@ -48,7 +53,7 @@ class TradingEnv(EnvBase):
     def _convert_to_list_tensors(self, dataframe: pd.DataFrame):
         self.column_names = dataframe.columns
         self.states_per_day = []
-        for index in range(self._num_time_steps):
+        for index in range(self._num_time_steps + 1):
             tensordict = TensorDict(
                 {},
                 batch_size=[],
@@ -94,7 +99,7 @@ class TradingEnv(EnvBase):
     def _perform_trading_action(self, tensordict: TensorDict):
         """Perform the trading action."""
         # Check if done, it will be used at the bottom
-        done = self._day == self._num_time_steps - 2
+        done = self._day == self._num_time_steps - 1
 
         actions = tensordict["action"]
 
@@ -137,6 +142,7 @@ class TradingEnv(EnvBase):
                 "num_shares_owned": new_num_shares_owned,
             },
             batch_size=tensordict.shape,
+            device=self.device,
         )
 
         # Compute reward
@@ -226,11 +232,14 @@ def _apply_transform_observation(env: TradingEnv) -> TransformedEnv:
     """Concatenates the columns into an observation key."""
     transformed_env = TransformedEnv(
         env=env,
-        transform=CatTensors(
-            in_keys=env._data_container._preprocessing_config.technical_indicators,
-            dim=-1,
-            out_key="observation",
-            del_keys=False,
+        transform=Compose(
+            CatTensors(
+                in_keys=env.technical_indicators,
+                dim=-1,
+                out_key="observation",
+                del_keys=False,
+            ),
+            VecNorm(in_keys=["observation"]),
         ),
         device=env.device,
     )
@@ -246,7 +255,6 @@ def _apply_transforms(env: EnvBase) -> TransformedEnv:
             StepCounter(),
             DoubleToFloat(),
             RewardSum(),
-            VecNorm(),
         ),
         device=env.device,
     )

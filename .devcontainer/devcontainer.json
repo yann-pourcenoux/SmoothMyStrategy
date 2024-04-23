@@ -14,7 +14,7 @@
   // "forwardPorts": [],
   // Uncomment the next line to run commands after the container is created.
   // "postCreateCommand": "cat /etc/os-release",
-  "runArgs": ["--gpus", "all", "--platform", "linux/amd64"],
+  "runArgs": ["--platform", "linux/amd64", "--gpus", "all"],
   "containerUser": "vscode",
   "remoteUser": "vscode",
   "updateRemoteUserUID": true,
