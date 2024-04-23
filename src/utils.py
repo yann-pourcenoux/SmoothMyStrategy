@@ -1,6 +1,7 @@
 """Module that holds all the utils function to run the training."""
 
 import time
+from collections import defaultdict
 
 import torch
 import tqdm
@@ -98,6 +99,7 @@ def collect_data(
     # Set the policy in eval mode
     collector.policy.eval()
 
+    metrics_to_log = defaultdict(list)
     sampling_start = time.time()
     for i, tensordict in tqdm.tqdm(
         enumerate(collector),
@@ -123,19 +125,32 @@ def collect_data(
         replay_buffer.extend(tensordict.cpu())
 
         # Add metrics
-        metrics_to_log = {}
         episode_end = tensordict["next", "done"]
         episode_rewards = tensordict["next", "episode_reward"][episode_end]
         # Logging
         if len(episode_rewards) > 0:
             episode_length = tensordict["next", "step_count"][episode_end]
-            metrics_to_log["train/reward"] = episode_rewards.mean().item()
-            metrics_to_log["train/episode_length"] = episode_length.sum().item() / len(
-                episode_length
+            episode_length = episode_length.sum().item() / len(episode_length)
+            metrics_to_log["train/episode_length"].append(episode_length)
+
+            episode_rewards = episode_rewards.mean().item()
+            metrics_to_log["train/reward"].append(episode_rewards)
+
+            # This is conceptually wrong but ok in practice since all the trajectories
+            # have the same length
+            average_reward_per_step = episode_rewards / episode_length
+            metrics_to_log["train/average_reward_per_step"].append(
+                average_reward_per_step
             )
 
     sampling_time = time.time() - sampling_start
     metrics_to_log["timer/train/sampling_time"] = sampling_time
+    metrics_to_log["train/episode_length"] = sum(
+        metrics_to_log["train/episode_length"]
+    ) / len(metrics_to_log["train/episode_length"])
+    metrics_to_log["train/reward"] = sum(metrics_to_log["train/reward"]) / len(
+        metrics_to_log["train/reward"]
+    )
 
     # Set the policy back to train mode
     collector.policy.train()

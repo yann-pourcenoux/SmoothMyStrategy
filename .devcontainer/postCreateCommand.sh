@@ -17,3 +17,8 @@ pre-commit install
 
 # Download the torch_rl examples
 bash tools/install_utils/download_torchrl_implementations.sh
+
+# Create data folder
+mkdir -p data
+touch data/.gitignore
+echo "*" > data/.gitignore

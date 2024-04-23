@@ -10,9 +10,10 @@ from torchrl.envs.utils import check_env_specs
 from config.schemas import DataLoaderConfigSchema, DataPreprocessingConfigSchema
 from data.container import DataContainer
 from environments.config import EnvironmentConfigSchema
-
-# from environments.discrete_trading import DiscreteTradingEnv
 from environments.trading import TradingEnv, apply_transforms
+
+START_DATE = "2020-01-01"
+END_DATE = "2024-01-01"
 
 
 def _create_env(
@@ -21,12 +22,17 @@ def _create_env(
     tickers: list[str],
 ) -> TradingEnv:
     env = environment_class(
-        config=EnvironmentConfigSchema(batch_size=batch_size),
+        config=EnvironmentConfigSchema(
+            batch_size=batch_size,
+            start_date=START_DATE,
+            end_date=END_DATE,
+        ),
         data_container=DataContainer(
             loading_config=DataLoaderConfigSchema(tickers=tickers),
             preprocessing_config=DataPreprocessingConfigSchema(
                 technical_indicators=["close_10_sma", "log-ret"],
-                start_date="2020-01-01",
+                start_date=START_DATE,
+                end_date=END_DATE,
             ),
         ),
     )
@@ -124,12 +130,6 @@ class TestTradingEnv(BaseTestTradingEnvironment, unittest.TestCase):
             torch.all(tensordict["num_shares_owned"] == num_shares_owned_day_1)
         )
 
-
-# Disabled for now since this is not the focus.
-# class TestDiscreteTradingEnv(BaseTestTradingEnvironment, unittest.TestCase):
-#     """Class to test the discrete trading environment."""
-
-#     environment_class = DiscreteTradingEnv
 
 if __name__ == "__main__":
     unittest.main()

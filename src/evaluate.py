@@ -39,24 +39,32 @@ def evaluate(
     eval_env: EnvBase,
     actor: ProbabilisticActor,
     config: EvaluationConfigSchema,
-    critic=None,
-):
+) -> dict[str, float]:
+    """Run an evaluation rollout, log metrics and save data dor analysis.
+
+    Args:
+        eval_env (EnvBase): Environment to evaluate.
+        actor (ProbabilisticActor): Actor to evaluate.
+        config (EvaluationConfigSchema): Evaluation configuration.
+
+    Returns:
+        dict[str, float]: Metrics to log.
+    """
     metrics_to_log = {}
     eval_start = time.time()
     eval_rollout = rollout(eval_env, actor, config)
     eval_time = time.time() - eval_start
 
-    eval_reward = eval_rollout["next", "reward"].sum(-2).mean().item()
-    metrics_to_log["eval/mean_action"] = eval_rollout["action"].mean().item()
-    metrics_to_log["eval/reward"] = eval_reward
+    episode_end = eval_rollout["next", "done"]
+    episode_rewards = eval_rollout["next", "episode_reward"][episode_end]
+    episode_rewards = episode_rewards.mean().item()
+    episode_length = eval_rollout["next", "step_count"][episode_end]
+    episode_length = episode_length.sum().item() / len(episode_length)
+
+    metrics_to_log["eval/reward"] = episode_rewards
+    metrics_to_log["eval/episode_length"] = episode_length
+    metrics_to_log["eval/average_reward_per_step"] = episode_rewards / episode_length
     metrics_to_log["timer/eval/time"] = eval_time
-
-    critic.eval()
-    with torch.no_grad():
-        predictions = critic(eval_rollout)
-    critic.train()
-
-    metrics_to_log["eval/mean_state_value"] = predictions["state_value"].mean().item()
 
     save_traj(eval_rollout)
     return metrics_to_log
