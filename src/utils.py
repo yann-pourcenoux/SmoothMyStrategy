@@ -144,13 +144,8 @@ def collect_data(
             )
 
     sampling_time = time.time() - sampling_start
+    metrics_to_log = {k: sum(v) / len(v) for k, v in metrics_to_log.items()}
     metrics_to_log["timer/train/sampling_time"] = sampling_time
-    metrics_to_log["train/episode_length"] = sum(
-        metrics_to_log["train/episode_length"]
-    ) / len(metrics_to_log["train/episode_length"])
-    metrics_to_log["train/reward"] = sum(metrics_to_log["train/reward"]) / len(
-        metrics_to_log["train/reward"]
-    )
 
     # Set the policy back to train mode
     collector.policy.train()

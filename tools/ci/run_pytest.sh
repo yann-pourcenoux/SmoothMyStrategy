@@ -1,5 +1,7 @@
 set -euxo pipefail
 
+source tools/ci/before_script.sh
+
 GIT_PYTHON_GIT_EXECUTABLE=`pwd`
 echo $GIT_PYTHON_GIT_EXECUTABLE
 
