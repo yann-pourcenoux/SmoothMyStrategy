@@ -3,22 +3,13 @@ set -eo pipefail
 # Add .local/bin to PATH needed to find the packages
 export PATH=$PATH:/home/vscode/.local/bin
 
-# Update pip
-python -m pip install --upgrade pip
-
-# Install the package and its dependencies
-pip install -e .
-
 # Add this to avoid git errors
 git config --global --add safe.directory /workspaces/Finance
-
-# Install pre-commit hooks
-pre-commit install
 
 # Download the torch_rl examples
 bash tools/install_utils/download_torchrl_implementations.sh
 
-# Create data folder
+# Create useful folders
 mkdir -p data
-touch data/.gitignore
-echo "*" > data/.gitignore
+mkdir -p outputs
+mkdir -p wandb

@@ -12,9 +12,9 @@ FIN_PKG = [
     "QuantStats",  # The version comes from the URL in dependency_links
 ]
 RL_PKGS = [
-    "tensordict~=0.3.1",
-    "torchrl~=0.3.1",
-    "torch==2.2.2",
+    "tensordict~=0.4.0",
+    "torchrl~=0.4.0",
+    "torch~=2.3.1",
 ]
 STYLE_PKGS = [
     "black~=23.7.0",
@@ -34,6 +34,7 @@ UTILS_PKGS = [
     "jupyter~=1.0.0",
     "loguru~=0.7.2",
     "pydantic~=2.6.4",
+    "tqdm~=4.66.4",
 ]
 VIZ_PKGS = [
     "plotly~=5.20.0",
