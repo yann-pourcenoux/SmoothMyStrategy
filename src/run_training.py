@@ -109,6 +109,11 @@ def run_training(config: ExperimentConfigSchema):
         for optimizer in model_optimizers
     ]
 
+    # Compile
+    torch.compile(exploration_policy)
+    torch.compile(model)
+    torch.compile(loss_module)
+
     # Main loop
     for epoch in tqdm.tqdm(
         range(config.training.num_epochs),
