@@ -26,7 +26,21 @@ def main(period: float = 10) -> None:
     df.to_csv(os.path.join(DATASET_PATH, f"COS_{period}.csv"), index=False)
 
     df["Close"][:100].plot()
-    plt.show()
+    plt.savefig("cosine.png")
+
+    # Create a time series that is a random walk
+    price = np.random.randn(len(df)) * 0.01 + 1
+
+    price = [np.multiply.accumulate(price[: i + 1])[-1] for i in range(len(price))]
+    df["Open"] = price
+    df["High"] = price
+    df["Low"] = price
+    df["Close"] = price
+    df.to_csv(os.path.join(DATASET_PATH, "random_walk.csv"), index=False)
+
+    plt.figure()
+    df["Close"].plot()
+    plt.savefig("random_walk.png")
 
 
 if __name__ == "__main__":
