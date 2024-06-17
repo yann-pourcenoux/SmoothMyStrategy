@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objs as go
-import quantstats as qs
+import quantstats_lumi as qs
 import wandb
 
 from constants import EVALUATION_LOGS_FILENAME, METRICS_REPORT_FILENAME
