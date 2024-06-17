@@ -18,4 +18,4 @@ uv pip -V
 uv pip list
 
 # Install the package
-uv pip install -e .
+uv pip install -e .[dev]
