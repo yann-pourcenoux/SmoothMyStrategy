@@ -44,3 +44,6 @@ dev = [
     'pytest~=8.1.1',
     'ruff~=0.0.280',
 ]
+
+[project.scripts]
+run_training = "run_training:main"

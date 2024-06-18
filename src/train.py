@@ -1,6 +1,7 @@
 """Module to train an agent."""
 
 import time
+from typing import Dict
 
 import tqdm
 from tensordict import TensorDict
@@ -20,7 +21,7 @@ def train(
     optimizers: tuple[optim.Optimizer, optim.Optimizer, optim.Optimizer],
     target_net_updater: SoftUpdate,
     schedulers: list,
-):
+) -> Dict[str, float]:
     optimizer_actor, optimizer_critic, optimizer_alpha = optimizers
     metrics_to_log = {}
     # Update the models
