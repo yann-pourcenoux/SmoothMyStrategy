@@ -2,6 +2,7 @@
 
 import time
 from collections import defaultdict
+from typing import Dict
 
 import torch
 import tqdm
@@ -95,7 +96,7 @@ def collect_data(
     replay_buffer: TensorDictPrioritizedReplayBuffer | TensorDictReplayBuffer,
     num_steps_per_episode: int,
     advantage_module: str = "",
-) -> dict[str, float]:
+) -> Dict[str, float]:
     # Set the policy in eval mode
     collector.policy.eval()
 

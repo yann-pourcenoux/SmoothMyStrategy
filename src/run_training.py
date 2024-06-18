@@ -1,6 +1,7 @@
 """Module to run a training."""
 
 import math
+from typing import Any, Dict
 
 import hydra
 import loguru
@@ -121,15 +122,18 @@ def run_training(config: ExperimentConfigSchema):
         leave=True,
         desc="Training status",
     ):
+        metrics_to_log: Dict[str, Any] = {"epoch": epoch}
         # Collect data
-        metrics_to_log = utils.collect_data(
-            collector,
-            replay_buffer,
-            num_steps_per_episode=math.ceil(
-                collector.env._num_time_steps
-                * config.train_environment.batch_size
-                / config.collector.frames_per_batch
-            ),
+        metrics_to_log.update(
+            utils.collect_data(
+                collector,
+                replay_buffer,
+                num_steps_per_episode=math.ceil(
+                    collector.env._num_time_steps
+                    * config.train_environment.batch_size
+                    / config.collector.frames_per_batch
+                ),
+            )
         )
 
         # Update the models

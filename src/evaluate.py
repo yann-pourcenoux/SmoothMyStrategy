@@ -2,6 +2,7 @@
 
 import os
 import time
+from typing import Dict
 
 import pandas as pd
 import torch
@@ -39,7 +40,7 @@ def evaluate(
     eval_env: EnvBase,
     actor: ProbabilisticActor,
     config: EvaluationConfigSchema,
-) -> dict[str, float]:
+) -> Dict[str, float]:
     """Run an evaluation rollout, log metrics and save data dor analysis.
 
     Args:
@@ -48,7 +49,7 @@ def evaluate(
         config (EvaluationConfigSchema): Evaluation configuration.
 
     Returns:
-        dict[str, float]: Metrics to log.
+        Dict[str, float]: Metrics to log.
     """
     metrics_to_log = {}
     eval_start = time.time()

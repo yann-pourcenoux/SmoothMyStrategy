@@ -2,8 +2,6 @@ defaults:
   - base_experiment
   - _self_
 
-analysis: null
-
 loading:
   tickers:
     - random_walk
@@ -31,7 +29,7 @@ collector:
   total_frames: -1
 
 training:
-  num_epochs: 100
+  num_epochs: 20
   num_steps_per_epoch: 5000
 
 replay_buffer:
