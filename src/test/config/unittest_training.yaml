@@ -1,0 +1,57 @@
+defaults:
+  - base_experiment
+  - _self_
+
+loading:
+  tickers:
+    - AAPL
+    - GOOGL
+
+agent:
+  hidden_sizes:
+    - 256
+    - 256
+
+train_environment:
+  batch_size: 2
+  cash: 3
+  fixed_initial_distribution: False
+  start_date: 2010-01-01
+  end_date: 2024-01-01
+
+eval_environment:
+  batch_size: 1
+  cash: ${train_environment.cash}
+  start_date: ${train_environment.start_date}
+  end_date: ${train_environment.end_date}
+
+collector:
+  frames_per_batch: 16
+  total_frames: -1
+
+training:
+  num_epochs: 1
+  num_steps_per_epoch: 200
+
+replay_buffer:
+  buffer_size: 10000000
+  batch_size: 16
+
+optimizer:
+  actor_lr: 1e-3
+
+logging:
+  online: False
+
+preprocessing:
+  technical_indicators:
+    - log-ret
+    - log-ret_-1_s
+    - log-ret_-2_s
+    - log-ret_-3_s
+    - log-ret_-4_s
+    - log-ret_-5_s
+    - log-ret_-6_s
+    - log-ret_-7_s
+    - log-ret_-8_s
+    - log-ret_-9_s
