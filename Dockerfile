@@ -1,15 +1,17 @@
 # Use the official PyTorch base image
-FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
+FROM pytorch/pytorch:2.3.1-cuda11.8-cudnn8-runtime AS base
 
 # Install git
 RUN apt-get update -y
 RUN apt-get install -y git
 
-# Install pip
-RUN apt-get install -y python3-pip
+# Install the package and its dependencies
+COPY pyproject.toml /tmp/tmp-finance/pyproject.toml
+RUN pip install /tmp/tmp-finance[dev]
+RUN rm -rf /tmp/tmp-finance
 
-# Install uv
-RUN pip3 install uv
+
+FROM base AS devcontainer
 
 # Add a non root user
 RUN adduser vscode

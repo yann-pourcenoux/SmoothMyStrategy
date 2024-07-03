@@ -1,12 +1,24 @@
 # Global image definition
-image: python:3.10
+image: "$CI_REGISTRY_IMAGE"
 
 # Change pip's cache directory to be inside the project directory since we can
 # only cache local items.
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
+Build image:
+  image: docker
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+  services:
+    - docker:dind
+  script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
+    - docker build --target base -t $CI_REGISTRY_IMAGE -f Dockerfile .
+    - docker push $CI_REGISTRY_IMAGE
+
 Run requirements check:
+  image: python:3.10
   stage: test
   only:
     - merge_requests
@@ -15,7 +27,6 @@ Run requirements check:
 
 Code check:
   stage: test
-  needs: ["Run requirements check"]
   only:
     - merge_requests
   script:
@@ -23,7 +34,6 @@ Code check:
 
 Run pytest:
   stage: test
-  needs: ["Run requirements check"]
   only:
     - merge_requests
   script:

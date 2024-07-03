@@ -1,45 +1,42 @@
-"""Script to check that the base image is consistent between the Dockerfile and .gitlab-
-ci.yml."""
+"""Script to check that the base image is consistent between the Dockerfile and
+pyproject.toml."""
 
 import re
+from typing import Optional
 
 
-def extract_image_from_dockerfile() -> str:
+def extract_image_from_dockerfile() -> Optional[str]:
     """Extract the image from the Dockerfile."""
     with open("Dockerfile", "r") as file:
-        for line in file:
-            if line.startswith("FROM "):
-                return line.strip().split(" ")[1]
+        dockerfile_content = file.read()
+
+    match = re.search(r"pytorch/pytorch:(\d+\.\d+\.\d+)", dockerfile_content)
+    if match:
+        return match.group(1)
     return None
 
 
-def extract_images_from_gitlab_ci_file() -> str:
-    """Extract the images from the .gitlab-ci.yml file."""
-    with open(".gitlab-ci.yml", "r") as file:
-        content = file.read()
-    pattern = r"image:\s*(nvidia/[^:\s]+:[^:\s]+)"
-    matches = re.findall(pattern, content)
-
-    if not matches:
+def get_torch_version() -> Optional[str]:
+    """Extract the torch version from the pyproject.toml file."""
+    with open("pyproject.toml", "r") as file:
+        pyproject_content = file.read()
+    match = re.search(r"torch==(\d+\.\d+\.\d+)", pyproject_content)
+    if match:
+        return match.group(1)
+    else:
         return None
 
-    first_match = matches[0]
-    assert all(
-        match == first_match for match in matches
-    ), "All nvidia images in .gitlab-ci.yml should be the same."
-    return first_match
 
+def check_images_match() -> None:
+    """Check that the base image is consistent between the Dockerfile and
+    pyproject.toml."""
+    docker_version = extract_image_from_dockerfile()
+    torch_version = get_torch_version()
 
-def check_images_match():
-    """Check that the base image is consistent between the Dockerfile and .gitlab-
-    ci.yml."""
-    docker_image = extract_image_from_dockerfile()
-    gitlab_ci_images = extract_images_from_gitlab_ci_file()
-
-    if gitlab_ci_images is not None and docker_image != gitlab_ci_images:
+    if docker_version != torch_version:
         raise ValueError(
-            f"The Dockerfile image {docker_image} is different from the .gitlab-ci.yml "
-            f"image {gitlab_ci_images}."
+            f"The Dockerfile image {docker_version} is different from the "
+            f" pyproject.toml version {torch_version}."
         )
 
 

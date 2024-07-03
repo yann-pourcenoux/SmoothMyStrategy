@@ -8,12 +8,6 @@
     // Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
     "dockerfile": "../Dockerfile"
   },
-  // Features to add to the dev container. More info: https://containers.dev/features.
-  // "features": {},
-  // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  // "forwardPorts": [],
-  // Uncomment the next line to run commands after the container is created.
-  // "postCreateCommand": "cat /etc/os-release",
   "runArgs": ["--platform", "linux/amd64", "--gpus", "all"],
   "containerUser": "vscode",
   "remoteUser": "vscode",
@@ -33,7 +27,9 @@
         "ms-python.pylint",
         "ms-python.black-formatter",
         "mechatroner.rainbow-csv",
-        "redhat.vscode-yaml"
+        "redhat.vscode-yaml",
+        "tamasfe.even-better-toml",
+        "charliermarsh.ruff"
       ]
     }
   },
