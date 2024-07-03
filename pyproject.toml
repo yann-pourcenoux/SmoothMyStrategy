@@ -27,7 +27,7 @@ dependencies = [
     'stockstats~=0.6.2',
     'tensordict~=0.4.0',
     'torchrl~=0.4.0',
-    'torch~=2.3.1',
+    'torch==2.3.1',
     'tqdm~=4.66.4',
     'wandb~=0.16.4',
     'yfinance~=0.2.37',
