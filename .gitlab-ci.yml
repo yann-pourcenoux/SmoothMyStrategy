@@ -27,6 +27,8 @@ Run requirements check:
 
 Code check:
   stage: test
+  needs:
+    - Run requirements check
   only:
     - merge_requests
   script:
@@ -34,6 +36,8 @@ Code check:
 
 Run pytest:
   stage: test
+  needs:
+    - Run requirements check
   only:
     - merge_requests
   script:
