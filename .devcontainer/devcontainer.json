@@ -8,6 +8,9 @@
     // Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
     "dockerfile": "../Dockerfile"
   },
+  "forwardPorts": [
+    4200 // Change from the default 3000 for OpenDevin or other containers
+  ],
   "runArgs": ["--platform", "linux/amd64", "--gpus", "all"],
   "containerUser": "vscode",
   "remoteUser": "vscode",
@@ -21,11 +24,9 @@
         "njpwerner.autodocstring",
         "vscode-icons-team.vscode-icons",
         "johnpapa.vscode-peacock",
-        "ms-azuretools.vscode-docker",
         "GitHub.copilot",
         "ms-toolsai.jupyter",
         "ms-python.pylint",
-        "ms-python.black-formatter",
         "mechatroner.rainbow-csv",
         "redhat.vscode-yaml",
         "tamasfe.even-better-toml",
