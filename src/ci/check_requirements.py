@@ -7,7 +7,7 @@ from typing import Optional
 
 def extract_image_from_dockerfile() -> Optional[str]:
     """Extract the image from the Dockerfile."""
-    with open("Dockerfile", "r") as file:
+    with open("Dockerfile", "r", encoding="utf-8") as file:
         dockerfile_content = file.read()
 
     match = re.search(r"pytorch/pytorch:(\d+\.\d+\.\d+)", dockerfile_content)
@@ -18,7 +18,7 @@ def extract_image_from_dockerfile() -> Optional[str]:
 
 def get_torch_version() -> Optional[str]:
     """Extract the torch version from the pyproject.toml file."""
-    with open("pyproject.toml", "r") as file:
+    with open("pyproject.toml", "r", encoding="utf-8") as file:
         pyproject_content = file.read()
     match = re.search(r"torch==(\d+\.\d+\.\d+)", pyproject_content)
     if match:

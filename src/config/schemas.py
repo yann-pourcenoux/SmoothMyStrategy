@@ -47,7 +47,7 @@ class LoggingConfigSchema:
 class AgentConfigSchema:
     """Configuration schema for the agent."""
 
-    hidden_sizes: tuple[int, ...] = (256, 256)
+    hidden_sizes: tuple[int, ...] = field(default_factory=lambda: (256, 256))
     default_policy_scale: float = 1.0
     scale_lb: float = 0.1
     activation: str = "relu"
@@ -123,30 +123,38 @@ class AnalysisConfigSchema:
 class ExperimentConfigSchema:
     """Configuration schema to train a model."""
 
-    loading: DataLoaderConfigSchema = DataLoaderConfigSchema()
-    preprocessing: DataPreprocessingConfigSchema = DataPreprocessingConfigSchema()
-
-    train_environment: EnvironmentConfigSchema = EnvironmentConfigSchema(
-        end_date="${eval_environment.start_date}",
-    )
-    eval_environment: EnvironmentConfigSchema = EnvironmentConfigSchema(
-        batch_size=1,
-        fixed_initial_distribution=True,
-        start_date="${train_environment.end_date}",
+    loading: DataLoaderConfigSchema = field(default_factory=DataLoaderConfigSchema)
+    preprocessing: DataPreprocessingConfigSchema = field(
+        default_factory=DataPreprocessingConfigSchema
     )
 
-    collector: CollectorConfigSchema = CollectorConfigSchema()
-    replay_buffer: ReplayBufferConfigSchema = ReplayBufferConfigSchema()
+    train_environment: EnvironmentConfigSchema = field(
+        default_factory=lambda: EnvironmentConfigSchema(
+            end_date="${eval_environment.start_date}",
+        )
+    )
+    eval_environment: EnvironmentConfigSchema = field(
+        default_factory=lambda: EnvironmentConfigSchema(
+            batch_size=1,
+            fixed_initial_distribution=True,
+            start_date="${train_environment.end_date}",
+        )
+    )
 
-    agent: AgentConfigSchema = AgentConfigSchema()
-    loss: LossConfigSchema = LossConfigSchema()
-    optimizer: OptimizerConfigSchema = OptimizerConfigSchema()
+    collector: CollectorConfigSchema = field(default_factory=CollectorConfigSchema)
+    replay_buffer: ReplayBufferConfigSchema = field(
+        default_factory=ReplayBufferConfigSchema
+    )
 
-    training: TrainingConfigSchema = TrainingConfigSchema()
-    evaluation: EvaluationConfigSchema = EvaluationConfigSchema()
-    analysis: AnalysisConfigSchema | None = AnalysisConfigSchema()
+    agent: AgentConfigSchema = field(default_factory=AgentConfigSchema)
+    loss: LossConfigSchema = field(default_factory=LossConfigSchema)
+    optimizer: OptimizerConfigSchema = field(default_factory=OptimizerConfigSchema)
 
-    logging: LoggingConfigSchema = LoggingConfigSchema()
+    training: TrainingConfigSchema = field(default_factory=TrainingConfigSchema)
+    evaluation: EvaluationConfigSchema = field(default_factory=EvaluationConfigSchema)
+    analysis: AnalysisConfigSchema | None = field(default_factory=AnalysisConfigSchema)
+
+    logging: LoggingConfigSchema = field(default_factory=LoggingConfigSchema)
     seed: int = 0
     device: str | None = None
 
