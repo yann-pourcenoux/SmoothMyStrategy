@@ -7,7 +7,7 @@ import torch
 from torchrl.envs import EnvBase
 from torchrl.envs.utils import check_env_specs
 
-from config.schemas import DataLoaderConfigSchema, DataPreprocessingConfigSchema
+from common.config import DataLoaderConfigSchema, DataPreprocessingConfigSchema
 from data.container import DataContainer
 from environments.config import EnvironmentConfigSchema
 from environments.trading import TradingEnv, apply_transforms

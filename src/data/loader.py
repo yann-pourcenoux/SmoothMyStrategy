@@ -6,7 +6,7 @@ from typing import Iterable
 import pandas as pd
 import stockstats
 
-from config.schemas import DataLoaderConfigSchema
+from common.config import DataLoaderConfigSchema
 from data.constants import DATASET_PATH
 
 

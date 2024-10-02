@@ -32,6 +32,11 @@ class DataLoaderConfigSchema:
 
     tickers: list[str] = field(default_factory=list)
 
+    @pydantic.field_validator("tickers")
+    @classmethod
+    def sort_tickers(cls, tickers: list[str]) -> list[str]:
+        return sorted(tickers)
+
 
 @pydantic.dataclasses.dataclass
 class LoggingConfigSchema:
@@ -51,6 +56,7 @@ class AgentConfigSchema:
     default_policy_scale: float = 1.0
     scale_lb: float = 0.1
     activation: str = "relu"
+    model_path: str | None = None
 
 
 @pydantic.dataclasses.dataclass
@@ -120,13 +126,28 @@ class AnalysisConfigSchema:
 
 
 @pydantic.dataclasses.dataclass
-class ExperimentConfigSchema:
-    """Configuration schema to train a model."""
+class DefaultRunConfigSchema:
+    """Default configuration schema."""
 
     loading: DataLoaderConfigSchema = field(default_factory=DataLoaderConfigSchema)
     preprocessing: DataPreprocessingConfigSchema = field(
         default_factory=DataPreprocessingConfigSchema
     )
+
+    analysis: AnalysisConfigSchema = field(default_factory=AnalysisConfigSchema)
+
+    logging: LoggingConfigSchema = field(default_factory=LoggingConfigSchema)
+    seed: int = 0
+    device: str | None = None
+
+    def __post_init__(self):
+        if self.device is None:
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+
+
+@pydantic.dataclasses.dataclass
+class ExperimentConfigSchema(DefaultRunConfigSchema):
+    """Configuration schema to train a model."""
 
     train_environment: EnvironmentConfigSchema = field(
         default_factory=lambda: EnvironmentConfigSchema(
@@ -152,15 +173,6 @@ class ExperimentConfigSchema:
 
     training: TrainingConfigSchema = field(default_factory=TrainingConfigSchema)
     evaluation: EvaluationConfigSchema = field(default_factory=EvaluationConfigSchema)
-    analysis: AnalysisConfigSchema | None = field(default_factory=AnalysisConfigSchema)
-
-    logging: LoggingConfigSchema = field(default_factory=LoggingConfigSchema)
-    seed: int = 0
-    device: str | None = None
-
-    def __post_init__(self):
-        if self.device is None:
-            self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 cs = ConfigStore.instance()

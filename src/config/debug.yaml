@@ -29,7 +29,7 @@ collector:
   total_frames: -1
 
 training:
-  num_epochs: 2
+  num_epochs: 3
   num_steps_per_epoch: 5000
 
 replay_buffer:

@@ -9,8 +9,8 @@ from torchrl.envs.utils import ExplorationType, set_exploration_type
 from torchrl.modules import MLP, ProbabilisticActor, ValueOperator
 from torchrl.modules.distributions import TanhNormal
 
-from config.schemas import AgentConfigSchema
-from models import get_activation
+from common.config import AgentConfigSchema
+from models.models import get_activation
 
 
 def make_sac_agent(
@@ -39,8 +39,8 @@ def make_sac_agent(
 
     dist_class = TanhNormal
     dist_kwargs = {
-        "min": action_spec.space.low,
-        "max": action_spec.space.high,
+        "low": action_spec.space.low,
+        "high": action_spec.space.high,
         "tanh_loc": False,
     }
 
