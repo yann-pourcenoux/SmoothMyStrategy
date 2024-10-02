@@ -5,7 +5,7 @@ from typing import Iterable
 import pandas as pd
 import stockstats
 
-from config.schemas import DataPreprocessingConfigSchema
+from common.config import DataPreprocessingConfigSchema
 
 
 def preprocess_data(

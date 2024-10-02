@@ -3,7 +3,7 @@
 wandb
 outputs
 .vscode
-data
+./data
 torch_rl_implementations
 
 # Byte-compiled / optimized / DLL files

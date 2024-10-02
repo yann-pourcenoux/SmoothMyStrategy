@@ -1,7 +1,5 @@
 """Module to define the environment to trade stocks."""
 
-from typing import List
-
 import numpy as np
 import pandas as pd
 import torch
@@ -26,12 +24,14 @@ class TradingEnv(EnvBase):
         seed: int | None = None,
         device: str = "cpu",
     ):
-        batch_size = [config.batch_size] if config.batch_size is not None else None
+        batch_size = (
+            torch.Size([config.batch_size]) if config.batch_size is not None else None
+        )
         super().__init__(device=device, batch_size=batch_size)
 
         self._config = config
-        self._env_data, self._num_time_steps = data_container.get_env_data(
-            config.start_date, config.end_date
+        self._env_data, self._num_time_steps, self._dates, self._tickers = (
+            data_container.get_env_data(config.start_date, config.end_date)
         )
         self._num_tickers = data_container.num_tickers
         self.technical_indicators = (
@@ -72,7 +72,9 @@ class TradingEnv(EnvBase):
                 )
             self.states_per_day.append(tensordict)
 
-    def _get_state_of_day(self, day: int | torch.Tensor, batch_size: List | torch.Size):
+    def _get_state_of_day(
+        self, day: int | torch.Tensor, batch_size: list[int] | torch.Size
+    ):
         state = self.states_per_day[day].clone()
         if batch_size:
             for key, value in state.items():
@@ -227,6 +229,41 @@ class TradingEnv(EnvBase):
             device=self.device,
         )
 
+    def process_rollout(self, rollout: TensorDict) -> pd.DataFrame:
+        """Perform a rollout and return a DataFrame with the results."""
+        num_steps = rollout.shape[-1]
+
+        dates = self._dates[:num_steps]
+        tickers = self._tickers
+
+        close = rollout["close"]
+        num_shares_owned = rollout["num_shares_owned"]
+        cash = rollout["cash"]
+        actions = rollout["action"]
+        portfolio_value = torch.squeeze(
+            cash + torch.sum(close * num_shares_owned, dim=-1, keepdim=True),
+            axis=-1,
+        )
+
+        # Convert the tensors to cpu().numpy()
+        close = close.cpu().numpy()[0]
+        num_shares_owned = num_shares_owned.cpu().numpy()[0]
+        cash = cash.cpu().numpy()[0, :, 0]
+        portfolio_value = portfolio_value.cpu().numpy()[0]
+        actions = actions.cpu().numpy()[0]
+
+        data = {"date": dates, "cash": cash, "portfolio_value": portfolio_value}
+        for i, ticker in enumerate(tickers):
+            data[f"action_{ticker}"] = actions[:, i]
+            data[f"close_{ticker}"] = close[:, i]
+            data[f"num_shares_owned_{ticker}"] = num_shares_owned[:, i]
+
+        df = pd.DataFrame(data)
+        df["daily_returns"] = df["portfolio_value"].pct_change().fillna(0)
+        df.set_index("date", inplace=True)
+        df.index = pd.to_datetime(df.index)
+        return df
+
 
 def _apply_transform_observation(env: TradingEnv) -> TransformedEnv:
     """Concatenates the columns into an observation key."""
@@ -266,3 +303,50 @@ def apply_transforms(env: EnvBase) -> TransformedEnv:
     env = _apply_transform_observation(env)
     env = _apply_transforms(env)
     return env
+
+
+### Remove what is below when done ###
+
+
+def main():
+    import quantstats_lumi as qs
+    from torchrl.envs.utils import check_env_specs
+
+    from common.config import DataLoaderConfigSchema, DataPreprocessingConfigSchema
+    from data.container import DataContainer
+    from environments.config import EnvironmentConfigSchema
+
+    env = TradingEnv(
+        config=EnvironmentConfigSchema(
+            batch_size=1,
+            start_date="2020-01-01",
+            end_date="2021-01-02",
+        ),
+        data_container=DataContainer(
+            loading_config=DataLoaderConfigSchema(
+                tickers=["GOOGL", "AAPL", "MSFT", "NVDA"]
+            ),
+            preprocessing_config=DataPreprocessingConfigSchema(
+                technical_indicators=["close_10_sma", "log-ret"],
+                start_date="2020-01-01",
+                end_date="2021-01-02",
+            ),
+        ),
+    )
+
+    check_env_specs(env)
+    env = apply_transforms(env)
+    check_env_specs(env)
+
+    rollout = env.rollout(max_steps=100)
+    print(rollout.shape)
+
+    df = env.process_rollout(rollout)
+    print(df.head())
+
+    sharpe_ratio = qs.stats.sharpe(df["daily_returns"])
+    print(f"Sharpe ratio: {sharpe_ratio}")
+
+
+if __name__ == "__main__":
+    main()

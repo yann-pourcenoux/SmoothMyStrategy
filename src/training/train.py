@@ -10,7 +10,7 @@ from torchrl.collectors import SyncDataCollector
 from torchrl.data import PrioritizedReplayBuffer, ReplayBuffer
 from torchrl.objectives import LossModule, SoftUpdate
 
-from config.schemas import TrainingConfigSchema
+from common.config import TrainingConfigSchema
 
 
 def train(

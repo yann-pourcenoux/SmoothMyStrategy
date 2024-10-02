@@ -10,22 +10,21 @@ import omegaconf
 import torch
 import tqdm
 
-import agents
-import analysis
 import data.container
 import data.preprocessing
 import environments.trading
-import evaluate
-import logger
-import losses
-import optimizers
-import train
-import utils
-from config.schemas import ExperimentConfigSchema
+import models.agents as agents
+import training.evaluate as evaluate
+import training.logger as logger
+import training.losses as losses
+import training.optimizers as optimizers
+import training.train as train
+import training.utils as utils
+from common.config import ExperimentConfigSchema
 from environments.trading import TradingEnv
 
 
-@hydra.main(version_base=None, config_path="config", config_name="base_experiment")
+@hydra.main(version_base=None, config_path="../config", config_name="base_experiment")
 def main(cfg: omegaconf.DictConfig):
     """Wrapper to start the training and interact with hydra."""
     config: ExperimentConfigSchema = omegaconf.OmegaConf.to_object(cfg)
@@ -78,6 +77,7 @@ def run_training(config: ExperimentConfigSchema):
         config=config.agent,
         device=device,
     )
+
     # Create SAC loss
     loss_module, target_net_updater = losses.make_loss_module(
         model=model,
@@ -150,24 +150,23 @@ def run_training(config: ExperimentConfigSchema):
         )
 
         # Evaluation
-        if config.evaluation is not None:
-            metrics_to_log.update(
-                evaluate.evaluate(
-                    eval_env,
-                    exploration_policy,
-                    config.evaluation,
-                )
-            )
-
-        # Analysis
-        if config.analysis is not None:
-            metrics_to_log.update(analysis.analyse())
+        metrics_to_log.update(
+            evaluate.evaluate(
+                eval_env,
+                exploration_policy,
+                config.evaluation,
+            )[0]
+        )
 
         # Log the metrics
         logger.log_metrics(wandb_logger, metrics_to_log, epoch)
 
     collector.shutdown()
-    return metrics_to_log, model
+
+    # Save the exploration policy to file
+    logger.log_model(model)
+
+    return model
 
 
 if __name__ == "__main__":

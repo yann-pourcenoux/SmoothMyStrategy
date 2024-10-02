@@ -2,10 +2,9 @@
 pyproject.toml."""
 
 import re
-from typing import Optional
 
 
-def extract_image_from_dockerfile() -> Optional[str]:
+def extract_image_from_dockerfile() -> str | None:
     """Extract the image from the Dockerfile."""
     with open("Dockerfile", "r", encoding="utf-8") as file:
         dockerfile_content = file.read()
@@ -16,7 +15,7 @@ def extract_image_from_dockerfile() -> Optional[str]:
     return None
 
 
-def get_torch_version() -> Optional[str]:
+def get_torch_version() -> str | None:
     """Extract the torch version from the pyproject.toml file."""
     with open("pyproject.toml", "r", encoding="utf-8") as file:
         pyproject_content = file.read()

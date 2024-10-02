@@ -5,8 +5,8 @@ import unittest
 import hydra
 import omegaconf
 
-import run_training
-from config.schemas import ExperimentConfigSchema
+import training.run_training as run_training
+from common.config import ExperimentConfigSchema
 
 
 class TestRunTraining(unittest.TestCase):

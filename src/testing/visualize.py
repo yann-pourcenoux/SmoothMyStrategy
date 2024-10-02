@@ -1,56 +1,53 @@
 """Contain visualization module."""
 
-from typing import Optional
-
 import altair as alt
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+import streamlit.components.v1 as components
 
 
-def load_data(
-    periods: int = 252,
-    tickers: Optional[list[str]] = None,
-    start_price: float = 50.0,
-) -> pd.DataFrame:
+def load_data(path: str = "eval_df.csv") -> pd.DataFrame:
     """Load data for the visualization.
 
     Args:
         periods (int): Number of periods to generate data for. Defaults to 252.
-        tickers (Optional[list[str]]): List of tickers to generate data for. Defaults
-            to ["AAPL", "GOOGL"].
+        tickers (list[str] | None): List of tickers to generate data for. Defaults
+            to None which leads to default ["AAPL", "GOOGL"].
         start_price (float): Starting price for the tickers. Defaults to 50.0.
 
     Returns:
         pd.DataFrame: DataFrame containing the generated data.
     """
-    if tickers is None:
-        tickers = ["AAPL", "GOOGL"]
 
-    data = {"date": pd.date_range(start="2023-01-01", periods=periods, freq="D")}
+    data = pd.read_csv(path)
+    # Extract tickers from the data
+    tickers = [
+        col.split("close_", 1)[1] for col in data.columns if col.startswith("close_")
+    ]
+    print(tickers)
+
+    # Convert date column to datetime
+    data["date"] = pd.to_datetime(data["date"])
+    data = data.set_index("date")
 
     for ticker in tickers:
-        returns = (1 + np.random.normal(0.001, 0.02, periods)).cumprod()
-        prices = start_price * returns
-        orders = np.random.choice([1.0, 0.0, -1.0], size=periods, p=[0.05, 0.9, 0.05])
-        shares = np.random.randint(1, 100, periods)
+        prices = data[f"close_{ticker}"]
+        returns = prices / prices.shift(1)
+        shares = data[f"num_shares_owned_{ticker}"]
+        orders = shares.diff()
         values = prices * shares
 
-        data.update(
-            {
-                f"return_{ticker}": returns,
-                f"price_{ticker}": prices,
-                f"order_{ticker}": orders,
-                f"shares_{ticker}": shares,
-                f"value_{ticker}": values,
-            }
-        )
+        data[f"daily_return_{ticker}"] = returns
+        data[f"price_{ticker}"] = prices
+        data[f"order_{ticker}"] = orders
+        data[f"shares_{ticker}"] = shares
+        data[f"value_{ticker}"] = values
 
-    data["value_cash"] = np.random.normal(10, 3, periods)
+    data["value_cash"] = data["cash"]
     data["portfolio_value"] = (
         sum(data[f"value_{ticker}"] for ticker in tickers) + data["value_cash"]
     )
@@ -58,11 +55,11 @@ def load_data(
     for ticker in tickers + ["cash"]:
         data[f"weight_{ticker}"] = data[f"value_{ticker}"] / data["portfolio_value"]
 
+    for ticker in tickers:
+        data[f"return_{ticker}"] = data[f"price_{ticker}"] / data[f"price_{ticker}"][0]
     data["portfolio_return"] = data["portfolio_value"] / data["portfolio_value"][0]
 
-    data = pd.DataFrame(data)
-    data = data.set_index("date")
-    return data
+    return data, tickers
 
 
 def display_returns(data: pd.DataFrame, tickers_to_show: list[str]) -> None:
@@ -166,10 +163,9 @@ def plot_portfolio_distribution(df: pd.DataFrame) -> go.Figure:
 def main():
     """Main function to run the Streamlit app."""
     st.title("Portfolio Analysis")
-    data = load_data()
+    data, all_tickers = load_data()
 
     st.subheader("Portfolio Return and Asset Returns Over Time")
-    all_tickers = ["AAPL", "GOOGL"]
     tickers_to_show_returns = st.multiselect(
         "Select tickers to show:",
         all_tickers,
@@ -190,6 +186,16 @@ def main():
         key="tickers_to_show_signals",
     )
     display_buy_sell_signals(data, tickers_to_show_signals)
+
+    # New section to display the HTML report
+    st.subheader("HTML Report")
+
+    # Read the contents of the HTML file
+    with open("report.html", "r") as f:
+        html_content = f.read()
+
+    # Display the HTML content
+    components.html(html_content, height=600, scrolling=True)
 
 
 if __name__ == "__main__":

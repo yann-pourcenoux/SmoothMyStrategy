@@ -4,7 +4,7 @@ import pandas as pd
 
 import data.loader
 import data.preprocessing
-from config.schemas import DataLoaderConfigSchema, DataPreprocessingConfigSchema
+from common.config import DataLoaderConfigSchema, DataPreprocessingConfigSchema
 
 
 class DataContainer:
@@ -27,12 +27,22 @@ class DataContainer:
         )
         self.num_tickers = len(self._loading_config.tickers)
 
-    def get_env_data(self, start_date: str | None = None, end_date: str | None = None):
-        """Get the data for the environment."""
+    def _select_time_range(
+        self, start_date: str | None = None, end_date: str | None = None
+    ):
+        """Select the time range for the environment."""
         df = data.preprocessing.select_time_range(self.data, start_date, end_date)
         df.index = df.date.factorize()[0]
-        df.drop(columns=["date", "ticker"], inplace=True)
+        return df
 
+    def get_env_data(self, start_date: str | None = None, end_date: str | None = None):
+        """Get the data for the environment."""
+        df = self._select_time_range(start_date, end_date)
+
+        dates = df.date.unique()
+        tickers = df.ticker.unique()
+
+        df.drop(columns=["date", "ticker"], inplace=True)
         num_time_steps = max(df.index)
 
-        return df, num_time_steps
+        return df, num_time_steps, dates, tickers
