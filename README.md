@@ -49,3 +49,7 @@ It is just a sigmoid that is generated in the downloading script
 
 You can run a training on it using the `debug` config, i.e using the `--config-name=debug`
 argument.
+
+## Coverage
+
+[![Coverage Status](https://gitlab.com/yannpourcenoux/Finance/badges/main/coverage.svg)](https://gitlab.com/yannpourcenoux/Finance/-/pipelines)
