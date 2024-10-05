@@ -43,12 +43,14 @@ Run pytest:
     - merge_requests
   script:
     - bash tools/ci/run_pytest.sh
-  coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/' # Regex to extract coverage percentage
+  coverage: '/TOTAL.*? (100(?:\.0+)?\%\|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
     paths:
       - coverage.xml
     reports:
-      cobertura: coverage.xml # GitLab supports Cobertura coverage reports
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
 # run:
 #   script:
 #     - pip install .
