@@ -17,6 +17,8 @@ pip install -e .
 
 ### Download TorchRL examples
 
+This is only needed to run TorchRL tutorials.
+
 ```shell
 bash tools/install_utils/download_torchrl_implementations.sh
 ```
@@ -40,5 +42,23 @@ python src/data/download.py
 To train a model, run:
 
 ```shell
-python src/run_training.py --config-name=xxx
+run_training.py --config-name=xxx
+```
+
+## Test a model
+
+To test a model, run:
+
+```shell
+run_testing --config-name=xxx
+```
+
+Don't forget top provide the `agent.model_path` element of the config.
+
+## Visualization and analysis of test runs
+
+Run
+
+```shell
+streamlit run src/visualization/main.py
 ```
