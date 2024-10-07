@@ -1,5 +1,6 @@
 """Module that contains the config schemas."""
 
+import os
 from dataclasses import field
 
 import pydantic
@@ -35,6 +36,7 @@ class DataLoaderConfigSchema:
     @pydantic.field_validator("tickers")
     @classmethod
     def sort_tickers(cls, tickers: list[str]) -> list[str]:
+        """Sort the tickers."""
         return sorted(tickers)
 
 
@@ -42,10 +44,14 @@ class DataLoaderConfigSchema:
 class LoggingConfigSchema:
     """Configuration schema for logging."""
 
-    logging_directory: str = "logging"
+    logging_directory: str = ""
     experiment: str | None = None
     project: str = "debug"
     online: bool = True
+
+    def __post_init__(self):
+        if self.logging_directory:
+            os.makedirs(self.logging_directory, exist_ok=True)
 
 
 @pydantic.dataclasses.dataclass
@@ -82,6 +88,10 @@ class ReplayBufferConfigSchema:
     prefetch: int = 3
     pin_memory: bool = False
 
+    def __post_init__(self):
+        if self.buffer_scratch_dir is None:
+            self.buffer_scratch_dir = "outputs/scratch_replay_buffer"
+
 
 @pydantic.dataclasses.dataclass
 class OptimizerConfigSchema:
@@ -100,7 +110,7 @@ class EvaluationConfigSchema:
     """Configuration schema for the evaluation."""
 
     eval_rollout_steps: int = 1_000_000
-    exploration_type: str = "mode"
+    exploration_type: str = "deterministic"
 
 
 @pydantic.dataclasses.dataclass
@@ -126,8 +136,8 @@ class AnalysisConfigSchema:
 
 
 @pydantic.dataclasses.dataclass
-class DefaultRunConfigSchema:
-    """Default configuration schema."""
+class ExperimentConfigSchema:
+    """Configuration schema to train a model."""
 
     loading: DataLoaderConfigSchema = field(default_factory=DataLoaderConfigSchema)
     preprocessing: DataPreprocessingConfigSchema = field(
@@ -139,15 +149,6 @@ class DefaultRunConfigSchema:
     logging: LoggingConfigSchema = field(default_factory=LoggingConfigSchema)
     seed: int = 0
     device: str | None = None
-
-    def __post_init__(self):
-        if self.device is None:
-            self.device = "cuda" if torch.cuda.is_available() else "cpu"
-
-
-@pydantic.dataclasses.dataclass
-class ExperimentConfigSchema(DefaultRunConfigSchema):
-    """Configuration schema to train a model."""
 
     train_environment: EnvironmentConfigSchema = field(
         default_factory=lambda: EnvironmentConfigSchema(
@@ -173,6 +174,10 @@ class ExperimentConfigSchema(DefaultRunConfigSchema):
 
     training: TrainingConfigSchema = field(default_factory=TrainingConfigSchema)
     evaluation: EvaluationConfigSchema = field(default_factory=EvaluationConfigSchema)
+
+    def __post_init__(self):
+        if self.device is None:
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 cs = ConfigStore.instance()

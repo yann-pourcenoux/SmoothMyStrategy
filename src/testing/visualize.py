@@ -10,29 +10,25 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 
-def load_data(path: str = "eval_df.csv") -> pd.DataFrame:
-    """Load data for the visualization.
+def load_data(
+    path: str | None = None, data: pd.DataFrame | None = None
+) -> tuple[pd.DataFrame, list[str]]:
+    """Load portfolio data for visualization.
 
     Args:
-        periods (int): Number of periods to generate data for. Defaults to 252.
-        tickers (list[str] | None): List of tickers to generate data for. Defaults
-            to None which leads to default ["AAPL", "GOOGL"].
-        start_price (float): Starting price for the tickers. Defaults to 50.0.
+        path (str): Path to the CSV file containing the evaluation data.
 
     Returns:
-        pd.DataFrame: DataFrame containing the generated data.
+        tuple[pd.DataFrame, list[str]]: A tuple containing the DataFrame with portfolio data and a list of ticker symbols.
     """
+    if data is None:
+        assert path is not None, "Either df or path must be provided."
+        data = pd.read_csv(path)
 
-    data = pd.read_csv(path)
     # Extract tickers from the data
     tickers = [
         col.split("close_", 1)[1] for col in data.columns if col.startswith("close_")
     ]
-    print(tickers)
-
-    # Convert date column to datetime
-    data["date"] = pd.to_datetime(data["date"])
-    data = data.set_index("date")
 
     for ticker in tickers:
         prices = data[f"close_{ticker}"]
@@ -160,10 +156,11 @@ def plot_portfolio_distribution(df: pd.DataFrame) -> go.Figure:
     return fig
 
 
-def main():
+def main(data: pd.DataFrame | None = None, path_report: str | None = None):
     """Main function to run the Streamlit app."""
     st.title("Portfolio Analysis")
-    data, all_tickers = load_data()
+
+    data, all_tickers = load_data(data=data)
 
     st.subheader("Portfolio Return and Asset Returns Over Time")
     tickers_to_show_returns = st.multiselect(
@@ -187,15 +184,13 @@ def main():
     )
     display_buy_sell_signals(data, tickers_to_show_signals)
 
-    # New section to display the HTML report
-    st.subheader("HTML Report")
-
-    # Read the contents of the HTML file
-    with open("report.html", "r") as f:
-        html_content = f.read()
-
     # Display the HTML content
-    components.html(html_content, height=600, scrolling=True)
+    if path_report is not None:
+        st.subheader("HTML Report")
+        with open(path_report, "r") as f:
+            html_content = f.read()
+
+        components.html(html_content, height=600, scrolling=True)
 
 
 if __name__ == "__main__":

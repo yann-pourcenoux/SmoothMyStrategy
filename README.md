@@ -42,10 +42,3 @@ To train a model, run:
 ```shell
 python src/run_training.py --config-name=xxx
 ```
-
-### Artificial data
-
-It is just a sigmoid that is generated in the downloading script
-
-You can run a training on it using the `debug` config, i.e using the `--config-name=debug`
-argument.

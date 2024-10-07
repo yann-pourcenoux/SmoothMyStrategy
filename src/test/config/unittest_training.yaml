@@ -14,7 +14,7 @@ agent:
 
 train_environment:
   batch_size: 2
-  cash: 3
+  cash: 300
   fixed_initial_distribution: False
   start_date: 2010-01-01
   end_date: 2024-01-01
@@ -30,8 +30,8 @@ collector:
   total_frames: -1
 
 training:
-  num_epochs: 1
-  num_steps_per_epoch: 200
+  num_epochs: 2
+  num_steps_per_epoch: 20
 
 replay_buffer:
   buffer_size: 10000000
@@ -42,6 +42,7 @@ optimizer:
 
 logging:
   online: False
+  logging_directory: "unittest"
 
 preprocessing:
   technical_indicators:

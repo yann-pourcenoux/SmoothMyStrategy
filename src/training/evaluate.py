@@ -56,8 +56,8 @@ def compute_eval_metrics(df: pd.DataFrame) -> Dict[str, float]:
     """Analyse the performance from a csv and plot."""
     daily_returns = df["daily_returns"]
     metrics_to_log = {
-        "sharpe_ratio": qs.stats.sharpe(daily_returns),
-        "calmar_ratio": qs.stats.calmar(daily_returns),
+        "eval/sharpe_ratio": qs.stats.sharpe(daily_returns),
+        "eval/calmar_ratio": qs.stats.calmar(daily_returns),
     }
 
     return metrics_to_log

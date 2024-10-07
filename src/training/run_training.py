@@ -9,6 +9,7 @@ import numpy as np
 import omegaconf
 import torch
 import tqdm
+import wandb
 
 import data.container
 import data.preprocessing
@@ -165,6 +166,8 @@ def run_training(config: ExperimentConfigSchema):
 
     # Save the exploration policy to file
     logger.log_model(model)
+
+    wandb.finish()
 
     return model
 

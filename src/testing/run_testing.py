@@ -4,6 +4,7 @@ import hydra
 import loguru
 import numpy as np
 import omegaconf
+import pandas as pd
 import torch
 import wandb
 from omegaconf import DictConfig
@@ -29,7 +30,9 @@ def main(cfg: DictConfig):
     return run_testing(config)
 
 
-def run_testing(config: ExperimentConfigSchema):
+def run_testing(
+    config: ExperimentConfigSchema, model: torch.nn.Module | None = None
+) -> pd.DataFrame:
     # Find device
     device = utils.get_device(config.device)
 
@@ -54,7 +57,8 @@ def run_testing(config: ExperimentConfigSchema):
         ),
     )
     # Load the model
-    model = torch.load(config.agent.model_path)
+    if model is None:
+        model = torch.load(config.agent.model_path)
     exploration_policy = model[0]
 
     # Compute metrics
@@ -71,6 +75,7 @@ def run_testing(config: ExperimentConfigSchema):
     # Log the metrics
     logger.log_metrics(wandb_logger, metrics_to_log)
 
+    wandb.finish()
     return eval_df
 
 

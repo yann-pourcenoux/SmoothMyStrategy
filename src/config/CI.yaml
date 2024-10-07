@@ -4,7 +4,7 @@ defaults:
 
 loading:
   tickers:
-    - random_walk
+    - AAPL
 
 agent:
   hidden_sizes:
@@ -13,9 +13,9 @@ agent:
 
 train_environment:
   batch_size: 1
-  cash: 3
+  cash: 1000
   fixed_initial_distribution: False
-  start_date: 2010-01-01
+  start_date: 2020-01-01
   end_date: 2024-01-01
 
 eval_environment:
@@ -29,20 +29,19 @@ collector:
   total_frames: -1
 
 training:
-  num_epochs: 3
-  num_steps_per_epoch: 5000
+  num_epochs: 100
+  num_steps_per_epoch: 1000
 
 replay_buffer:
   buffer_size: 10000000
   batch_size: 512
-  buffer_scratch_dir: /workspaces/Finance/outputs/scratch
 
 optimizer:
   actor_lr: 1e-3
 
 logging:
   project: debug
-  experiment: null
+  logging_directory: "outputs"
 
 preprocessing:
   technical_indicators:
