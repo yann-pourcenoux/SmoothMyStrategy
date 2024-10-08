@@ -7,8 +7,8 @@ import pydantic
 class EnvironmentConfigSchema:
     """Configuration schema for the environment."""
 
-    batch_size: int | None = None
-    cash: float = 1e6
+    batch_size: int | None = 1
+    cash: float | str = 1e6
     fixed_initial_distribution: bool = False
     start_date: str | None = None
     end_date: str | None = None

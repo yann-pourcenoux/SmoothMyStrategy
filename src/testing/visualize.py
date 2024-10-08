@@ -25,6 +25,10 @@ def load_data(
         assert path is not None, "Either df or path must be provided."
         data = pd.read_csv(path)
 
+    # If date is a column, ensure it is the index
+    if "date" in data.columns:
+        data.set_index("date", inplace=True)
+
     # Extract tickers from the data
     tickers = [
         col.split("close_", 1)[1] for col in data.columns if col.startswith("close_")
@@ -68,6 +72,7 @@ def display_returns(data: pd.DataFrame, tickers_to_show: list[str]) -> None:
     columns_to_display = ["portfolio_return"] + [
         f"return_{ticker}" for ticker in tickers_to_show
     ]
+    print(data[columns_to_display].head())
     st.line_chart(data[columns_to_display])
 
 
@@ -156,11 +161,19 @@ def plot_portfolio_distribution(df: pd.DataFrame) -> go.Figure:
     return fig
 
 
-def main(data: pd.DataFrame | None = None, path_report: str | None = None):
-    """Main function to run the Streamlit app."""
-    st.title("Portfolio Analysis")
+def visualize(
+    data_path: str | None = None,
+    report_path: str | None = None,
+    data: pd.DataFrame | None = None,
+) -> None:
+    """Visualize the portfolio data.
 
-    data, all_tickers = load_data(data=data)
+    Args:
+        data_path (str): Path to the CSV file containing the evaluation data.
+        report_path (str): Path to the HTML report. Defaults to None.
+        data (pd.DataFrame): DataFrame containing the evaluation data.
+    """
+    data, all_tickers = load_data(path=data_path, data=data)
 
     st.subheader("Portfolio Return and Asset Returns Over Time")
     tickers_to_show_returns = st.multiselect(
@@ -185,12 +198,22 @@ def main(data: pd.DataFrame | None = None, path_report: str | None = None):
     display_buy_sell_signals(data, tickers_to_show_signals)
 
     # Display the HTML content
-    if path_report is not None:
+    if report_path:
         st.subheader("HTML Report")
-        with open(path_report, "r") as f:
+        with open(report_path, "r") as f:
             html_content = f.read()
-
         components.html(html_content, height=600, scrolling=True)
+
+
+def main():
+    """Main function to run the Streamlit app."""
+    st.title("Portfolio Analysis")
+
+    # Streamlit widgets for user inputs
+    data_path = st.text_input("Enter the path to the CSV file", value="")
+    report_path = st.text_input("Enter the path to the HTML report", value="")
+
+    visualize(data_path, report_path)
 
 
 if __name__ == "__main__":

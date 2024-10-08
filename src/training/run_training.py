@@ -45,8 +45,15 @@ def run_training(config: ExperimentConfigSchema):
     torch.manual_seed(config.seed)
     np.random.seed(config.seed)
 
-    # Create logger
-    wandb_logger = logger.get_logger(config)
+    # Initialize wandb
+    wandb.init(
+        project=config.logging.project,
+        name=config.logging.experiment,
+        config=config,
+        dir=config.logging.logging_directory,
+        mode="offline" if not config.logging.online else "online",
+        tags=["training"],
+    )
 
     # Get environments
     data_container = data.container.DataContainer(
@@ -106,7 +113,8 @@ def run_training(config: ExperimentConfigSchema):
     schedulers = [
         torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer,
-            T_max=config.training.num_epochs * config.training.num_steps_per_epoch,
+            T_max=config.optimizer.T_max,
+            eta_min=config.optimizer.eta_min,
         )
         for optimizer in model_optimizers
     ]
@@ -123,7 +131,9 @@ def run_training(config: ExperimentConfigSchema):
         leave=True,
         desc="Training status",
     ):
-        metrics_to_log: Dict[str, Any] = {"epoch": epoch}
+        metrics_to_log: Dict[str, Any] = {
+            "train/learning_rate": schedulers[0].get_last_lr()
+        }
         # Collect data
         metrics_to_log.update(
             utils.collect_data(
@@ -160,7 +170,7 @@ def run_training(config: ExperimentConfigSchema):
         )
 
         # Log the metrics
-        logger.log_metrics(wandb_logger, metrics_to_log, epoch)
+        wandb.log(metrics_to_log, step=epoch)
 
     collector.shutdown()
 

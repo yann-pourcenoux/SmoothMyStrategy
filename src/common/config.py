@@ -44,7 +44,7 @@ class DataLoaderConfigSchema:
 class LoggingConfigSchema:
     """Configuration schema for logging."""
 
-    logging_directory: str = ""
+    logging_directory: str = "outputs"
     experiment: str | None = None
     project: str = "debug"
     online: bool = True
@@ -79,11 +79,11 @@ class LossConfigSchema:
 class ReplayBufferConfigSchema:
     """Configuration schema for the replay buffer."""
 
-    batch_size: int = 256
+    batch_size: int = 512
     prb: bool = False
     alpha: float = 0.7
     beta: float = 0.5
-    buffer_size: int = 1000000
+    buffer_size: int = 10000000
     buffer_scratch_dir: str | None = None
     prefetch: int = 3
     pin_memory: bool = False
@@ -103,6 +103,9 @@ class OptimizerConfigSchema:
 
     weight_decay: float = 0.0
     adam_eps: float = 1.0e-8
+
+    T_max: int = 100000
+    eta_min: float = 0.0
 
 
 @pydantic.dataclasses.dataclass
@@ -126,7 +129,7 @@ class CollectorConfigSchema:
     """Configuration schema for the collector."""
 
     total_frames: int = -1
-    frames_per_batch: int = 1024
+    frames_per_batch: int = 64
     storage_device: str = "cpu"
 
 
@@ -158,6 +161,7 @@ class ExperimentConfigSchema:
     eval_environment: EnvironmentConfigSchema = field(
         default_factory=lambda: EnvironmentConfigSchema(
             batch_size=1,
+            cash="${train_environment.cash}",
             fixed_initial_distribution=True,
             start_date="${train_environment.end_date}",
         )

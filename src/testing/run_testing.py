@@ -40,8 +40,15 @@ def run_testing(
     torch.manual_seed(config.seed)
     np.random.seed(config.seed)
 
-    # Create logger
-    wandb_logger = logger.get_logger(config)
+    # Initialize wandb
+    wandb.init(
+        project=config.logging.project,
+        name=config.logging.experiment,
+        config=config,
+        dir=config.logging.logging_directory,
+        mode="offline" if not config.logging.online else "online",
+        tags=["testing"],
+    )
 
     # Get environments
     data_container = data.container.DataContainer(
@@ -59,6 +66,7 @@ def run_testing(
     # Load the model
     if model is None:
         model = torch.load(config.agent.model_path)
+
     exploration_policy = model[0]
 
     # Compute metrics
@@ -73,7 +81,7 @@ def run_testing(
     analysis.log_report(eval_df["daily_returns"], output_path=wandb.run.dir)
 
     # Log the metrics
-    logger.log_metrics(wandb_logger, metrics_to_log)
+    wandb.log(metrics_to_log)
 
     wandb.finish()
     return eval_df

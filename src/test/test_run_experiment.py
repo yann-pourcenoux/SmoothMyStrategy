@@ -25,7 +25,7 @@ class TestPipeline(unittest.TestCase):
         config: ExperimentConfigSchema = omegaconf.OmegaConf.to_object(config)
         model = run_training.run_training(config)
         eval_df = run_testing.run_testing(config, model)
-        visualize.main(data=eval_df)
+        visualize.visualize(data=eval_df)
 
 
 if __name__ == "__main__":
