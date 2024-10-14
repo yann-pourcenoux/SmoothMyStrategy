@@ -74,7 +74,7 @@ def make_replay_buffer(
 def compute_portfolio_value(tensordict: TensorDict) -> list[float] | list[list[float]]:
     """Compute the value of a portfolio over the time steps and batch dimensions."""
     portfolio_value = tensordict["cash"] + torch.sum(
-        tensordict["num_shares_owned"] * tensordict["close"],
+        tensordict["num_shares_owned"] * tensordict["adj_close"],
         dim=-1,
         keepdim=True,
     )

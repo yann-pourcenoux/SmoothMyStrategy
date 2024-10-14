@@ -122,7 +122,7 @@ def clean_data(dataframe: pd.DataFrame) -> pd.DataFrame:
     df = dataframe.copy()
     df.sort_values(["date", "ticker"], ignore_index=True, inplace=True)
     df.index = df.date.factorize()[0]
-    merged_closes = df.pivot_table(index="date", columns="ticker", values="close")
+    merged_closes = df.pivot_table(index="date", columns="ticker", values="adj_close")
     merged_closes = merged_closes.dropna(axis=1)
     tics = merged_closes.columns
 

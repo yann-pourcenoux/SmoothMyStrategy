@@ -21,7 +21,7 @@ def load_data(config: DataLoaderConfigSchema) -> Iterable[stockstats.StockDataFr
     """
     for ticker in config.tickers:
         df = pd.read_csv(os.path.join(DATASET_PATH, f"{ticker}.csv"))
-        df = df[["Date", "Open", "High", "Low", "Close", "Volume"]]
+        df = df[["Date", "Open", "High", "Low", "Close", "Adj Close", "Volume"]]
 
         df = _select_and_rename_columns(df)
         df = _convert_to_date(df)
@@ -49,6 +49,7 @@ def _select_and_rename_columns(dataframe: pd.DataFrame) -> pd.DataFrame:
         "High": "high",
         "Low": "low",
         "Close": "close",
+        "Adj Close": "adj_close",
         "Volume": "volume",
     }
     columns_to_drop = [column for column in dataframe.columns if column not in mapping]

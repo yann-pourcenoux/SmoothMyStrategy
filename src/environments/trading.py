@@ -107,7 +107,9 @@ class TradingEnv(EnvBase):
 
         # Compute portfolio value
         portfolio_value = tensordict["cash"] + torch.sum(
-            tensordict["num_shares_owned"] * tensordict["close"], dim=-1, keepdim=True
+            tensordict["num_shares_owned"] * tensordict["adj_close"],
+            dim=-1,
+            keepdim=True,
         )
 
         new_num_shares_owned = tensordict["num_shares_owned"].clone()
@@ -119,7 +121,7 @@ class TradingEnv(EnvBase):
             num_shares_owned = torch.gather(
                 tensordict["num_shares_owned"], dim=-1, index=indices
             )
-            price_share = torch.gather(tensordict["close"], dim=-1, index=indices)
+            price_share = torch.gather(tensordict["adj_close"], dim=-1, index=indices)
 
             with torch.no_grad():
                 min_num_shares_action = -num_shares_owned
@@ -149,9 +151,10 @@ class TradingEnv(EnvBase):
 
         # Compute reward
         new_portfolio_value = new_cash + torch.sum(
-            new_num_shares_owned * out["close"], dim=-1, keepdim=True
+            new_num_shares_owned * out["adj_close"], dim=-1, keepdim=True
         )
         reward = torch.log(new_portfolio_value / portfolio_value)
+
         out["reward"] = reward
 
         # Set the done and terminated
@@ -182,10 +185,12 @@ class TradingEnv(EnvBase):
         # Take only the distribution of shares
         distribution = distribution[..., :-1]
         # Compute the number of shares
-        num_shares_owned = torch.floor(distribution * self._config.cash / out["close"])
+        num_shares_owned = torch.floor(
+            distribution * self._config.cash / out["adj_close"]
+        )
         # Update the cash amount
         cash = self._config.cash - torch.sum(
-            num_shares_owned * out["close"], dim=-1, keepdim=True
+            num_shares_owned * out["adj_close"], dim=-1, keepdim=True
         )
 
         out["cash"] = cash
@@ -236,7 +241,7 @@ class TradingEnv(EnvBase):
         dates = self._dates[:num_steps]
         tickers = self._tickers
 
-        close = rollout["close"]
+        close = rollout["adj_close"]
         num_shares_owned = rollout["num_shares_owned"]
         cash = rollout["cash"]
         actions = rollout["action"]

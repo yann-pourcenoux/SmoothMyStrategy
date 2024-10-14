@@ -105,7 +105,7 @@ class TestTradingEnv(BaseTestTradingEnvironment, unittest.TestCase):
         action = torch.ones((batch_size, 1), dtype=torch.float32, device=env.device)
         tensordict["action"] = action
 
-        price_day_0 = env.states_per_day[0]["close"]
+        price_day_0 = env.states_per_day[0]["adj_close"]
         num_shares_owned_day_0 = tensordict["num_shares_owned"]
         cash_day_0 = tensordict["cash"]
         assert torch.all(cash_day_0 > action * price_day_0)
@@ -115,7 +115,7 @@ class TestTradingEnv(BaseTestTradingEnvironment, unittest.TestCase):
 
         cash_day_1 = cash_day_0 - price_day_0 * action
         num_shares_owned_day_1 = num_shares_owned_day_0 + action
-        price_day_1 = env.states_per_day[1]["close"]
+        price_day_1 = env.states_per_day[1]["adj_close"]
         value_day_1 = cash_day_1 + torch.sum(
             num_shares_owned_day_1 * price_day_1, dim=-1, keepdim=True
         )
