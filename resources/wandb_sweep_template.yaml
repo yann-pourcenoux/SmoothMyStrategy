@@ -1,0 +1,13 @@
+command:
+  - run_training
+  - --config-name=single_ticker
+
+metric:
+  name: eval/sharpe_ratio
+  goal: maximize
+
+method: grid
+
+parameters:
+  optimizer.actor_lr:
+    values: [1e-1, 1e-2, 1e-3, 1e-4]

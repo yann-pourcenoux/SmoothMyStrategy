@@ -1,6 +1,5 @@
 defaults:
   - base_experiment
-  - eval_environment: same_time_train
   - _self_
 
 loading:
