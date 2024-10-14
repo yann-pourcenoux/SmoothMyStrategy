@@ -1,6 +1,7 @@
 command:
   - run_training
   - --config-name=single_ticker
+  - ${args_no_hyphens}
 
 metric:
   name: eval/sharpe_ratio
