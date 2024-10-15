@@ -12,14 +12,22 @@ train_environment:
   end_date: 2023-01-01
 
 training:
-  num_epochs: 100
+  num_epochs: 25
   num_steps_per_epoch: 1000
 
 replay_buffer:
   batch_size: 512
 
 optimizer:
-  actor_lr: 1e-3
+  actor_lr: 1e-2
+  critic_lr: 1e-2
+  alpha_lr: 1e-2
+  weight_decay: 1e-8
+
+agent:
+  hidden_sizes:
+    - 64
+    - 64
 
 logging:
   project: single-ticker-experiment
