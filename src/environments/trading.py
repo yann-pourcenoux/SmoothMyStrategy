@@ -155,6 +155,12 @@ class TradingEnv(EnvBase):
         )
         reward = torch.log(new_portfolio_value / portfolio_value)
 
+        # Compute new reward
+        returns_assets = torch.mean(
+            out["adj_close"] / tensordict["adj_close"], dim=-1, keepdim=True
+        )
+        reward = reward - torch.log(returns_assets)
+
         out["reward"] = reward
 
         # Set the done and terminated

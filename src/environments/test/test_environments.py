@@ -120,7 +120,9 @@ class TestTradingEnv(BaseTestTradingEnvironment, unittest.TestCase):
             num_shares_owned_day_1 * price_day_1, dim=-1, keepdim=True
         )
 
-        reward = torch.log(value_day_1 / value_day_0)
+        reward = torch.log(value_day_1 / value_day_0) - torch.log(
+            price_day_1 / price_day_0
+        )
 
         tensordict = env._perform_trading_action(tensordict)
 
