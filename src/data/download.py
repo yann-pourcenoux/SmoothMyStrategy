@@ -21,7 +21,9 @@ def download_tickers(tickers: list[str], data_path: str) -> None:
     progress_bar = tqdm(tickers, leave=False)
     for ticker in progress_bar:
         progress_bar.set_description(f"Downloading {ticker}")
-        ticker_data = yf.download(ticker, period="max", progress=False)
+        ticker_data = yf.download(
+            ticker, period="max", progress=False, multi_level_index=False
+        )
         ticker_data.to_csv(f"{data_path}/{ticker}.csv")
 
 
@@ -40,7 +42,7 @@ def load_ticker_list(path: str) -> list[str]:
     if not os.path.exists(path):
         raise FileNotFoundError(f"File {path} does not exist.")
 
-    with open(path, "r") as file:
+    with open(path, "r", encoding="utf-8") as file:
         return json.load(file)
 
 

@@ -72,7 +72,6 @@ def display_returns(data: pd.DataFrame, tickers_to_show: list[str]) -> None:
     columns_to_display = ["portfolio_return"] + [
         f"return_{ticker}" for ticker in tickers_to_show
     ]
-    print(data[columns_to_display].head())
     st.line_chart(data[columns_to_display])
 
 

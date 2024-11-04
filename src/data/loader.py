@@ -4,20 +4,19 @@ import os
 from typing import Iterable
 
 import pandas as pd
-import stockstats
 
 from common.config import DataLoaderConfigSchema
 from data.constants import DATASET_PATH
 
 
-def load_data(config: DataLoaderConfigSchema) -> Iterable[stockstats.StockDataFrame]:
+def load_data(config: DataLoaderConfigSchema) -> Iterable[pd.DataFrame]:
     """Load data from csv files.
 
     Args:
         config (DataLoaderConfigSchema): configuration for DataLoader.
 
     Returns:
-        Iterable[stockstats.StockDataFrame]: iterable of stockstats.StockDataFrame.
+        Iterable[pd.DataFrame]: iterable of pd.DataFrame.
     """
     for ticker in config.tickers:
         df = pd.read_csv(os.path.join(DATASET_PATH, f"{ticker}.csv"))
@@ -31,7 +30,7 @@ def load_data(config: DataLoaderConfigSchema) -> Iterable[stockstats.StockDataFr
         df.dropna(inplace=True)
         df.reset_index(drop=True, inplace=True)
 
-        yield stockstats.wrap(df)
+        yield df
 
 
 def _select_and_rename_columns(dataframe: pd.DataFrame) -> pd.DataFrame:

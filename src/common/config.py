@@ -2,6 +2,7 @@
 
 import os
 from dataclasses import field
+from typing import Any
 
 import pydantic
 import torch
@@ -16,9 +17,11 @@ class DataPreprocessingConfigSchema:
 
     Attributes:
         technical_indicators (list[str]): list of technical indicators to use.
+        start_date (str | None): start date to use for the data.
+        end_date (str | None): end date to use for the data.
     """
 
-    technical_indicators: list[str] = field(default_factory=list)
+    technical_indicators: dict[str, dict[str, Any]] = field(default_factory=dict)
     start_date: str | None = "${train_environment.start_date}"
     end_date: str | None = "${eval_environment.end_date}"
 

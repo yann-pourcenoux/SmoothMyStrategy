@@ -1,5 +1,5 @@
 # Use the official PyTorch base image from https://hub.docker.com/r/pytorch/pytorch/tags
-FROM pytorch/pytorch:2.4.1-cuda12.4-cudnn9-runtime AS base
+FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime AS base
 
 # Install git
 RUN apt-get update -y

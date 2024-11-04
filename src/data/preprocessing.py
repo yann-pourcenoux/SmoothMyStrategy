@@ -1,22 +1,21 @@
 """Data preprocessing module."""
 
-from typing import Iterable
+from typing import Any, Iterable
 
 import pandas as pd
-import stockstats
 
 from common.config import DataPreprocessingConfigSchema
+from data.features import get_feature
 
 
 def preprocess_data(
-    stock_df_iterator: Iterable[stockstats.StockDataFrame],
+    stock_df_iterator: Iterable[pd.DataFrame],
     config: DataPreprocessingConfigSchema,
 ) -> pd.DataFrame:
     """Preprocess the data.
 
     Args:
-        stock_df_iterator (Iterable[stockstats.StockDataFrame]): Iterable of
-            stockstats.StockDataFrame.
+        stock_df_iterator (Iterable[pd.DataFrame]): Iterable of pd.DataFrame.
         config (DataPreprocessingConfigSchema): Configuration for preprocessing.
 
     Returns:
@@ -35,24 +34,24 @@ def preprocess_data(
 
 
 def _add_technical_indicators(
-    stock_df_iterator: Iterable[stockstats.StockDataFrame],
-    technical_indicators: list[str],
+    stock_df_iterator: Iterable[pd.DataFrame],
+    technical_indicators: dict[str, dict[str, Any]],
 ) -> Iterable[pd.DataFrame]:
     """Add technical indicators to dataframe.
 
     Args:
-        stock_df_iterator (Iterable[stockstats.StockDataFrame]): Iterable of
-            stockstats.StockDataFrame.
-        technical_indicators (list[str]): list of technical indicators to add.
+        stock_df_iterator (Iterable[pd.DataFrame]): Iterable of pd.DataFrame.
+        technical_indicators (dict[str, dict[str, Any]]): dictionary of technical
+            indicators to add.
 
     Returns:
         Iterable[pd.DataFrame]: Iterable of pd.DataFrame.
     """
     for stock_df in stock_df_iterator:
-        for indicator in technical_indicators:
-            stock_df.get(indicator)
+        for indicator, feature_params in technical_indicators.items():
+            stock_df = get_feature(indicator, feature_params)(stock_df)
 
-        df = stockstats.unwrap(stock_df)
+        df = stock_df
         df.reset_index(inplace=True)
         df.dropna(inplace=True)
 
