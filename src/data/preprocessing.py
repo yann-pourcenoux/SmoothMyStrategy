@@ -1,11 +1,11 @@
 """Data preprocessing module."""
 
-from typing import Any, Iterable
+from typing import Iterable
 
 import pandas as pd
 
 from common.config import DataPreprocessingConfigSchema
-from data.features import get_feature
+from data.features import FeatureGenerator
 
 
 def preprocess_data(
@@ -35,7 +35,7 @@ def preprocess_data(
 
 def _add_technical_indicators(
     stock_df_iterator: Iterable[pd.DataFrame],
-    technical_indicators: dict[str, dict[str, Any]],
+    technical_indicators: list[str],
 ) -> Iterable[pd.DataFrame]:
     """Add technical indicators to dataframe.
 
@@ -47,11 +47,10 @@ def _add_technical_indicators(
     Returns:
         Iterable[pd.DataFrame]: Iterable of pd.DataFrame.
     """
+    feature_generator = FeatureGenerator()
     for stock_df in stock_df_iterator:
-        for indicator, feature_params in technical_indicators.items():
-            stock_df = get_feature(indicator, feature_params)(stock_df)
+        df = feature_generator.generate_features(stock_df, technical_indicators)
 
-        df = stock_df
         df.reset_index(inplace=True)
         df.dropna(inplace=True)
 
@@ -121,7 +120,7 @@ def clean_data(dataframe: pd.DataFrame) -> pd.DataFrame:
     df = dataframe.copy()
     df.sort_values(["date", "ticker"], ignore_index=True, inplace=True)
     df.index = df.date.factorize()[0]
-    merged_closes = df.pivot_table(index="date", columns="ticker", values="adj_close")
+    merged_closes = df.pivot_table(index="date", columns="ticker", values="close")
     merged_closes = merged_closes.dropna(axis=1)
     tics = merged_closes.columns
 

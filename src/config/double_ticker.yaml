@@ -26,16 +26,3 @@ optimizer:
 
 logging:
   project: double-ticker-experiment
-
-preprocessing:
-  technical_indicators:
-    - log-ret
-    - log-ret_-1_s
-    - log-ret_-2_s
-    - log-ret_-3_s
-    - log-ret_-4_s
-    - log-ret_-5_s
-    - log-ret_-6_s
-    - log-ret_-7_s
-    - log-ret_-8_s
-    - log-ret_-9_s

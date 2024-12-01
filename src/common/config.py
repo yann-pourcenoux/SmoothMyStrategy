@@ -2,7 +2,6 @@
 
 import os
 from dataclasses import field
-from typing import Any
 
 import pydantic
 import torch
@@ -21,7 +20,7 @@ class DataPreprocessingConfigSchema:
         end_date (str | None): end date to use for the data.
     """
 
-    technical_indicators: dict[str, dict[str, Any]] = field(default_factory=dict)
+    technical_indicators: list[str] = field(default_factory=list)
     start_date: str | None = "${train_environment.start_date}"
     end_date: str | None = "${eval_environment.end_date}"
 
@@ -90,10 +89,6 @@ class ReplayBufferConfigSchema:
     buffer_scratch_dir: str | None = None
     prefetch: int = 3
     pin_memory: bool = False
-
-    def __post_init__(self):
-        if self.buffer_scratch_dir is None:
-            self.buffer_scratch_dir = "outputs/scratch_replay_buffer"
 
 
 @pydantic.dataclasses.dataclass

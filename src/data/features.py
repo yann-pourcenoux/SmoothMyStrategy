@@ -1,47 +1,103 @@
 """Module that contains the functions to add features to the data."""
 
-from functools import partial
-from typing import Any, Callable
+import re
+from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
 
 
-def get_feature(
-    feature_name: str, feature_params: dict[str, Any]
-) -> Callable[[pd.DataFrame], pd.DataFrame]:
-    """Get a feature from the feature name."""
-    if feature_name.startswith("log_return"):
-        return partial(log_return, **feature_params)
-    elif feature_name.startswith("macd"):
-        return partial(macd, **feature_params)
-    else:
-        raise ValueError(f"Feature {feature_name} not found")
+class FeatureGenerator:
+    """Generates features from price data based on feature names.
 
+    This class handles both parsing feature names and generating the corresponding
+    features from price data. Feature names encode both the type of feature and its
+    parameters (e.g., 'log_return_8' for an 8-period log return).
+    """
 
-def log_return(
-    dataframe: pd.DataFrame,
-    column: str = "adj_close",
-    shift: int = 0,
-) -> pd.DataFrame:
-    """Add the log return to the dataframe."""
-    dataframe[f"log_return_{shift}"] = np.log(
-        dataframe[column] / dataframe[column].shift(1)
-    )
-    dataframe[f"log_return_{shift}"] = dataframe[f"log_return_{shift}"].shift(shift)
-    return dataframe
+    FEATURE_PATTERNS = {
+        r"^log_return_(\d+)$": ("log_return", ["shift"]),
+        r"^return_(\d+)$": ("return", ["shift"]),
+        # Add more patterns as needed
+    }
 
+    def __init__(self):
+        """Initialize the feature generator with available feature functions."""
+        self.feature_functions: Dict[str, Callable] = {
+            "log_return": self._generate_log_return,
+            "return": self._generate_return,
+            # Add more feature functions as needed
+        }
 
-def macd(
-    dataframe: pd.DataFrame,
-    column: str = "adj_close",
-    shift: int = 26,
-) -> pd.DataFrame:
-    ema_12 = dataframe[column].ewm(span=12, adjust=False).mean()
-    ema_26 = dataframe[column].ewm(span=26, adjust=False).mean()
+    def _parse_feature(self, feature_name: str) -> Tuple[str, Dict[str, Any]]:
+        """Parse a feature name into function name and parameters.
 
-    ema_12 = ema_12 / dataframe[column].shift(shift)
-    ema_26 = ema_26 / dataframe[column].shift(shift)
+        Args:
+            feature_name: Name of the feature (e.g., 'log_return_8')
 
-    dataframe[f"macd_{shift}"] = ema_12 - ema_26
-    return dataframe
+        Returns:
+            Tuple containing:
+                - function name (str)
+                - dictionary of parameters
+
+        Raises:
+            ValueError: If feature name doesn't match any known pattern
+        """
+        for pattern, (func_name, param_names) in self.FEATURE_PATTERNS.items():
+            match = re.match(pattern, feature_name)
+            if match:
+                params = [int(x) for x in match.groups()]
+                return func_name, dict(zip(param_names, params))
+
+        raise ValueError(f"Unknown feature pattern: {feature_name}")
+
+    def _generate_log_return(self, data: pd.DataFrame, shift: int) -> pd.Series:
+        """Generate log return feature with specified shift.
+
+        Args:
+            data: DataFrame containing price data
+            shift: Number of periods to shift
+
+        Returns:
+            Series containing the log returns
+        """
+        prices = data["close"]
+        return np.log(prices / prices.shift(shift))
+
+    def _generate_return(self, data: pd.DataFrame, shift: int) -> pd.Series:
+        """Generate simple return feature with specified shift.
+
+        Args:
+            data: DataFrame containing price data
+            shift: Number of periods to shift
+
+        Returns:
+            Series containing the returns
+        """
+        prices = data["close"]
+        return (prices / prices.shift(shift)) - 1
+
+    def generate_features(
+        self, data: pd.DataFrame, feature_names: List[str]
+    ) -> pd.DataFrame:
+        """Generate all specified features from the input data.
+
+        Args:
+            data: DataFrame containing price data
+            feature_names: List of feature names to generate
+
+        Returns:
+            DataFrame containing all generated features
+
+        Raises:
+            ValueError: If an unknown feature is requested
+        """
+        for feature_name in feature_names:
+            func_name, params = self._parse_feature(feature_name)
+            if func_name not in self.feature_functions:
+                raise ValueError(f"Unknown feature function: {func_name}")
+
+            feature = self.feature_functions[func_name](data, **params)
+            data[feature_name] = feature
+
+        return data

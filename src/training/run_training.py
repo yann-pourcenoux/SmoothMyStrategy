@@ -102,7 +102,9 @@ def run_training(config: ExperimentConfigSchema):
     )
 
     # Create replay buffer
-    replay_buffer = utils.make_replay_buffer(config=config.replay_buffer)
+    replay_buffer = utils.make_replay_buffer(
+        config=config.replay_buffer, run_dir=wandb.run.dir
+    )
 
     # Create optimizers
     model_optimizers = optimizers.make_sac_optimizer(

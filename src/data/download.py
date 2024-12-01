@@ -3,12 +3,30 @@
 import argparse
 import json
 import os
+from multiprocessing import Pool
 
+import pandas as pd
 import yfinance as yf
 from loguru import logger
 from tqdm import tqdm
 
 from data.constants import DATA_CONFIG_PATH, DATASET_PATH
+
+
+def save_ticker_data(args: tuple[str, pd.DataFrame, str]) -> None:
+    """Save individual ticker data to a CSV file.
+
+    Args:
+        args: Tuple containing:
+            - ticker (str): The ticker symbol
+            - tickers_data (pd.DataFrame): Complete DataFrame containing all ticker data
+            - data_path (Path): Path to save the CSV files
+    """
+    ticker, tickers_data, data_path = args
+    ticker_data = tickers_data[tickers_data["Ticker"] == ticker].copy()
+    ticker_data.drop(columns=["Ticker"], inplace=True)
+    ticker_data.dropna(inplace=True)
+    ticker_data.to_csv(f"{data_path}/{ticker}.csv", index=False)
 
 
 def download_tickers(tickers: list[str], data_path: str) -> None:
@@ -18,13 +36,24 @@ def download_tickers(tickers: list[str], data_path: str) -> None:
         tickers (list[str]): List of tickers to donwload.
         data_path (str): Path to save the data to.
     """
-    progress_bar = tqdm(tickers, leave=False)
-    for ticker in progress_bar:
-        progress_bar.set_description(f"Downloading {ticker}")
-        ticker_data = yf.download(
-            ticker, period="max", progress=False, multi_level_index=False
+    tickers_data = yf.download(tickers, period="max")
+    tickers_data = tickers_data.stack(level=1).reset_index()
+
+    # Some ticker donwloading may fail for various reasons
+    tickers = tickers_data["Ticker"].unique()
+
+    with Pool() as pool:
+        args = [
+            (ticker, tickers_data, data_path)
+            for ticker in tickers_data["Ticker"].unique()
+        ]
+        list(
+            tqdm(
+                pool.imap(save_ticker_data, args),
+                total=len(args),
+                desc="Saving files",
+            )
         )
-        ticker_data.to_csv(f"{data_path}/{ticker}.csv")
 
 
 def load_ticker_list(path: str) -> list[str]:
@@ -82,10 +111,12 @@ def main():
     args = _parse_args()
 
     logger.info(f"Downloading data to {args.output_path} ...")
-    progress_bar = tqdm(args.files, leave=False)
-    for file in progress_bar:
-        progress_bar.set_description(f"Downloading tickers from file {file}:")
-        download_tickers(load_ticker_list(file), args.output_path)
+
+    tickers = []
+    for file in args.files:
+        tickers.extend(load_ticker_list(file))
+
+    download_tickers(tickers, args.output_path)
     logger.info("Done.")
 
 

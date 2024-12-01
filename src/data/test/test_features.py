@@ -1,83 +1,81 @@
 """Unit tests for src/data/features.py."""
 
-from functools import partial
-from typing import Any, Dict
-
 import numpy as np
 import pandas as pd
 import pytest
 
-from data.features import get_feature, log_return, macd
+from data.features import FeatureGenerator
 
 
-def test_log_return() -> None:
-    """Test the log_return function.
-
-    Ensures that the log return is correctly calculated and shifted as specified.
-    """
-    data = {"adj_close": [100, 102, 101, 103, 104]}
-    df = pd.DataFrame(data)
-    result = log_return(df.copy(), column="adj_close", shift=1)
-    expected = df.copy()
-    expected["log_return_1"] = np.log(
-        expected["adj_close"] / expected["adj_close"].shift(1)
+def _create_test_data() -> pd.DataFrame:
+    """Create test data."""
+    dates = pd.date_range("2020-01-01", "2020-01-10")
+    data = pd.DataFrame(
+        {
+            "close": [100, 102, 101, 103, 102, 104, 103, 105, 104, 106],
+            "date": dates,
+            "ticker": "AAPL",
+        }
     )
-    expected["log_return_1"] = expected["log_return_1"].shift(1)
-    pd.testing.assert_frame_equal(result, expected)
+    return data
 
 
-def test_macd() -> None:
-    """Test the macd function.
+def test_feature_parsing() -> None:
+    """Test the feature name parsing."""
+    generator = FeatureGenerator()
 
-    Verifies that the MACD is correctly calculated using EMA with the specified shift.
-    """
-    np.random.seed(0)
-    data = {"adj_close": np.random.rand(100)}
-    df = pd.DataFrame(data)
-    result = macd(df.copy(), column="adj_close", shift=26)
-    ema_12 = df["adj_close"].ewm(span=12, adjust=False).mean() / df["adj_close"].shift(
-        26
-    )
-    ema_26 = df["adj_close"].ewm(span=26, adjust=False).mean() / df["adj_close"].shift(
-        26
-    )
-    expected_macd = ema_12 - ema_26
-    expected = df.copy()
-    expected["macd_26"] = expected_macd
-    pd.testing.assert_frame_equal(result, expected)
+    # Test log return parsing
+    func_name, params = generator._parse_feature("log_return_8")
+    assert func_name == "log_return"
+    assert params == {"shift": 8}
+
+    # Test simple return parsing
+    func_name, params = generator._parse_feature("return_5")
+    assert func_name == "return"
+    assert params == {"shift": 5}
+
+    # Test invalid feature name
+    with pytest.raises(ValueError, match="Unknown feature pattern"):
+        generator._parse_feature("invalid_feature_name")
 
 
-def test_get_feature_log_ret() -> None:
-    """Test get_feature for log-return.
+def test_feature_generation() -> None:
+    """Test the feature generation."""
+    generator = FeatureGenerator()
 
-    Ensures that the correct log_return function is returned when requested.
-    """
-    feature_params: Dict[str, Any] = {"column": "adj_close", "shift": 0}
-    feature = get_feature("log_return", feature_params)
-    assert isinstance(feature, partial)
-    assert feature.func == log_return
-    assert feature.keywords.get("column") == "adj_close"
-    assert feature.keywords.get("shift") == 0
+    data = _create_test_data()
 
+    # Test feature generation
+    features = generator.generate_features(data, ["log_return_1", "return_2"])
 
-def test_get_feature_macd() -> None:
-    """Test get_feature for MACD.
+    assert "log_return_1" in features.columns
+    assert "return_2" in features.columns
+    assert len(features) == len(data)
 
-    Ensures that the correct macd function is returned when requested.
-    """
-    feature_params: Dict[str, Any] = {"column": "adj_close", "shift": 26}
-    feature = get_feature("macd", feature_params)
-    assert isinstance(feature, partial)
-    assert feature.func == macd
-    assert feature.keywords.get("column") == "adj_close"
-    assert feature.keywords.get("shift") == 26
+    # Test log return values
+    expected_log_return = np.log(data["close"] / data["close"].shift(1))
+    np.testing.assert_array_equal(features["log_return_1"].values, expected_log_return)
+
+    # Test return values
+    expected_return = (data["close"] / data["close"].shift(2)) - 1
+    np.testing.assert_array_equal(features["return_2"].values, expected_return)
 
 
-def test_get_feature_invalid() -> None:
-    """Test get_feature with an invalid feature name.
+def test_invalid_feature() -> None:
+    """Test handling of invalid feature names."""
+    generator = FeatureGenerator()
+    data = _create_test_data()
 
-    Verifies that a ValueError is raised when an unknown feature name is provided.
-    """
-    feature_params: Dict[str, Any] = {"column": "adj_close", "shift": 0}
-    with pytest.raises(ValueError):
-        get_feature("invalid-feature", feature_params)
+    with pytest.raises(ValueError, match="Unknown feature pattern"):
+        generator.generate_features(data, ["invalid_feature"])
+
+
+def test_missing_price_column() -> None:
+    """Test handling of missing price column."""
+    generator = FeatureGenerator()
+    data = _create_test_data()
+
+    # Rename the close column
+    data.rename(columns={"close": "wrong_column"}, inplace=True)
+    with pytest.raises(KeyError):
+        generator.generate_features(data, ["log_return_1"])

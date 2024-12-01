@@ -30,7 +30,7 @@ def _create_env(
         data_container=DataContainer(
             loading_config=DataLoaderConfigSchema(tickers=tickers),
             preprocessing_config=DataPreprocessingConfigSchema(
-                technical_indicators={"log_return_1": {"shift": 1}},
+                technical_indicators=["log_return_1"],
                 start_date=START_DATE,
                 end_date=END_DATE,
             ),

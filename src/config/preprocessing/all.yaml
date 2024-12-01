@@ -1,11 +1,11 @@
 technical_indicators:
-  log_return_0: {}
-  log_return_1: { shift: 1 }
-  log_return_2: { shift: 2 }
-  log_return_3: { shift: 3 }
-  log_return_4: { shift: 4 }
-  log_return_5: { shift: 5 }
-  log_return_6: { shift: 6 }
-  log_return_7: { shift: 7 }
-  log_return_8: { shift: 8 }
-  log_return_9: { shift: 9 }
+  - log_return_0
+  - log_return_1
+  - log_return_2
+  - log_return_3
+  - log_return_4
+  - log_return_5
+  - log_return_6
+  - log_return_7
+  - log_return_8
+  - log_return_9

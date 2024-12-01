@@ -44,12 +44,15 @@ def make_collector(
 
 
 def make_replay_buffer(
-    config: ReplayBufferConfigSchema,
+    config: ReplayBufferConfigSchema, run_dir: str | None = None
 ) -> TensorDictPrioritizedReplayBuffer | TensorDictReplayBuffer:
     """Make replay buffer."""
+    scratch_dir = (
+        run_dir if config.buffer_scratch_dir is None else config.buffer_scratch_dir
+    )
     storage = LazyMemmapStorage(
         config.buffer_size,
-        scratch_dir=config.buffer_scratch_dir,
+        scratch_dir=scratch_dir,
         device="cpu",
     )
     if config.prb:

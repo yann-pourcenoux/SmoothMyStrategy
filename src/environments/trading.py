@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import torch
 from tensordict import TensorDict
-from torchrl.data import BoundedTensorSpec, CompositeSpec, UnboundedContinuousTensorSpec
+from torchrl.data import Bounded, Composite, Unbounded
 from torchrl.envs import CatTensors, Compose, DoubleToFloat, EnvBase, TransformedEnv
 from torchrl.envs.transforms import InitTracker, RewardSum, StepCounter, VecNorm
 
@@ -91,7 +91,7 @@ class TradingEnv(EnvBase):
         return tensordict["action"] * 100
 
     def _get_action_spec(self):
-        return BoundedTensorSpec(
+        return Bounded(
             shape=self.batch_size + (self._num_tickers,),
             low=-1,
             high=1,
@@ -209,20 +209,20 @@ class TradingEnv(EnvBase):
 
     def _make_spec(self):
         state = {
-            key: UnboundedContinuousTensorSpec(
+            key: Unbounded(
                 shape=self.batch_size + (self._num_tickers,),
                 dtype=torch.float32,
                 device=self.device,
             )
             for key in self.column_names
         }
-        self.observation_spec = CompositeSpec(
+        self.observation_spec = Composite(
             {
-                "cash": UnboundedContinuousTensorSpec(
+                "cash": Unbounded(
                     shape=self.batch_size + (1,),
                     device=self.device,
                 ),
-                "num_shares_owned": UnboundedContinuousTensorSpec(
+                "num_shares_owned": Unbounded(
                     shape=self.batch_size + (self._num_tickers,),
                     device=self.device,
                 ),
@@ -235,7 +235,7 @@ class TradingEnv(EnvBase):
 
         self.action_spec = self._get_action_spec()
 
-        self.reward_spec = UnboundedContinuousTensorSpec(
+        self.reward_spec = Unbounded(
             shape=self.batch_size + (1,),
             device=self.device,
         )
