@@ -160,7 +160,7 @@ class ExperimentConfigSchema:
         default_factory=lambda: EnvironmentConfigSchema(
             batch_size=1,
             cash="${train_environment.cash}",
-            fixed_initial_distribution=True,
+            random_initial_distribution=1.0,
             start_date="${train_environment.end_date}",
         )
     )

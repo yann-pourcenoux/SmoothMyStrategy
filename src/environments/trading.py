@@ -176,18 +176,22 @@ class TradingEnv(EnvBase):
         self._day = torch.zeros((), dtype=torch.int32)
         out = self._get_state_of_day(self._day, self.batch_size)
 
-        if self._config.fixed_initial_distribution:
-            distribution_gen_fn = torch.ones
+        # +1 comes form the cash
+        distribution_args = {
+            "size": self.batch_size + (self._num_tickers + 1,),
+            "dtype": torch.float32,
+            "device": self.device,
+        }
+        if self._config.random_initial_distribution is not None:
+            distribution = (
+                torch.rand(**distribution_args)
+                * self._config.random_initial_distribution
+            )
+            distribution = torch.softmax(distribution, dim=-1)
         else:
-            distribution_gen_fn = torch.rand
+            distribution = torch.ones(**distribution_args)
+            distribution = distribution / torch.sum(distribution, dim=-1, keepdim=True)
 
-        # +1 comes form the free cash to keep
-        distribution = distribution_gen_fn(
-            size=self.batch_size + (self._num_tickers + 1,),
-            dtype=torch.float32,
-            device=self.device,
-        )
-        distribution = distribution / torch.sum(distribution, dim=-1, keepdim=True)
         # Take only the distribution of shares
         distribution = distribution[..., :-1]
         # Compute the number of shares

@@ -15,7 +15,7 @@ agent:
 train_environment:
   batch_size: 2
   cash: 1000.0
-  fixed_initial_distribution: False
+  random_initial_distribution: 1.0
   start_date: 2023-01-01
   end_date: 2024-01-01
 

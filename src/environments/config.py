@@ -9,6 +9,6 @@ class EnvironmentConfigSchema:
 
     batch_size: int | None = 1
     cash: float | str = 1e6
-    fixed_initial_distribution: bool = False
+    random_initial_distribution: float | None = None
     start_date: str | None = None
     end_date: str | None = None
