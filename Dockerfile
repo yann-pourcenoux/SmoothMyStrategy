@@ -1,5 +1,5 @@
 # Use the official PyTorch base image from https://hub.docker.com/r/pytorch/pytorch/tags
-FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime AS base
+FROM pytorch/pytorch:2.6.0-cuda12.6-cudnn9-runtime AS base
 
 # Install git
 RUN apt-get update -y
@@ -7,7 +7,7 @@ RUN apt-get install -y git
 
 # Install the package and its dependencies
 COPY pyproject.toml /tmp/tmp-finance/pyproject.toml
-RUN pip install /tmp/tmp-finance[dev,ubuntu]
+RUN pip install /tmp/tmp-finance[dev]
 RUN rm -rf /tmp/tmp-finance
 
 FROM base AS devcontainer
