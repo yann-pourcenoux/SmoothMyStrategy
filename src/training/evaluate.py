@@ -22,9 +22,11 @@ def rollout(
 ) -> TensorDict:
     """Rollout an environment according to an actor."""
     actor.eval()
-    with set_exploration_type(
-        ExplorationType.from_str(config.exploration_type)
-    ), torch.no_grad(), torch.inference_mode():
+    with (
+        set_exploration_type(ExplorationType.from_str(config.exploration_type)),
+        torch.no_grad(),
+        torch.inference_mode(),
+    ):
         eval_rollout = eval_env.rollout(
             max_steps=config.eval_rollout_steps,
             policy=actor,

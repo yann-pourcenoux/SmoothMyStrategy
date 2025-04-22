@@ -20,7 +20,17 @@ def load_data(config: DataLoaderConfigSchema) -> Iterable[pd.DataFrame]:
     """
     for ticker in config.tickers:
         df = pd.read_csv(os.path.join(DATASET_PATH, f"{ticker}.csv"))
-        df = df[["Date", "Open", "High", "Low", "Close", "Adj Close", "Volume"]]
+        df = df[
+            [
+                "Date",
+                "Open",
+                "High",
+                "Low",
+                "Close",
+                "Adj Close",
+                "Volume",
+            ]
+        ]
 
         df = _select_and_rename_columns(df)
         df = _convert_to_date(df)
