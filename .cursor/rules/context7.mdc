@@ -1,0 +1,11 @@
+---
+description: 
+globs: *.py
+alwaysApply: false
+---
+
+# Context7
+
+Context7 MCP pulls up-to-date, version-specific documentation and code examples straight from the source — and places them directly into your prompt.
+
+use context7
