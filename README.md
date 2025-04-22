@@ -15,6 +15,12 @@ You can install the package by doing the following command:
 pip install -e .
 ```
 
+For development purposes, use:
+
+```shell
+pip install -e ".[dev]"
+```
+
 ### Download TorchRL examples
 
 This is only needed to run TorchRL tutorials.

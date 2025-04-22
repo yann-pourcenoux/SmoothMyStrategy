@@ -3,11 +3,7 @@ import yfinance as yf
 
 
 def download_data():
-    data = yf.download("AAPL", period="max")
-
-    # Keep onlyt the "Adj Close" column and rename it to "close"
-    data = data[["Adj Close"]]
-    data.rename(columns={"Adj Close": "close"}, inplace=True)
+    data = yf.download("AAPL", period="max", auto_adjust=True)
 
     # Keep only the last 1000 rows
 
