@@ -27,8 +27,7 @@ def load_data(config: DataLoaderConfigSchema) -> Iterable[pd.DataFrame]:
                 "High",
                 "Low",
                 "Close",
-                # TODO(@yann.pourcenoux): Add back "Adj Close"
-                #  "Adj Close",
+                "Adj Close",
                 "Volume",
             ]
         ]

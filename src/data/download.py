@@ -36,7 +36,7 @@ def download_tickers(tickers: list[str], data_path: str) -> None:
         tickers (list[str]): List of tickers to donwload.
         data_path (str): Path to save the data to.
     """
-    tickers_data = yf.download(tickers, period="max")
+    tickers_data = yf.download(tickers, period="max", auto_adjust=False)
     tickers_data = tickers_data.stack(level=1).reset_index()
 
     # Some ticker donwloading may fail for various reasons
@@ -71,7 +71,7 @@ def load_ticker_list(path: str) -> list[str]:
     if not os.path.exists(path):
         raise FileNotFoundError(f"File {path} does not exist.")
 
-    with open(path, "r", encoding="utf-8") as file:
+    with open(path, encoding="utf-8") as file:
         return json.load(file)
 
 
