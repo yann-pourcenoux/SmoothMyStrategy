@@ -65,7 +65,7 @@ def run_testing(
     )
     # Load the model
     if model is None:
-        model = torch.load(config.agent.model_path)
+        model = torch.load(config.agent.model_path, weights_only=False)
 
     exploration_policy = model[0]
 
