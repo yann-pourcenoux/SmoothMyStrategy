@@ -90,6 +90,9 @@ class TradingEnv(EnvBase):
     def _process_actions(self, tensordict: TensorDict):
         return tensordict["action"] * 100
 
+    def _inv_process_actions(self, tensordict: TensorDict):
+        return tensordict["action"] / 100
+
     def _get_action_spec(self):
         return Bounded(
             shape=self.batch_size + (self._num_tickers,),

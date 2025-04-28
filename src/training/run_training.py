@@ -21,21 +21,21 @@ import training.losses as losses
 import training.optimizers as optimizers
 import training.train as train
 import training.utils as utils
-from common.config import ExperimentConfigSchema
+from common.config import RLExperimentConfigSchema
 from environments.trading import TradingEnv
 
 
-@hydra.main(version_base=None, config_path="../config", config_name="base_experiment")
+@hydra.main(version_base=None, config_path="../config", config_name="rl_experiment")
 def main(cfg: omegaconf.DictConfig):
     """Wrapper to start the training and interact with hydra."""
-    config: ExperimentConfigSchema = omegaconf.OmegaConf.to_object(cfg)
+    config: RLExperimentConfigSchema = omegaconf.OmegaConf.to_object(cfg)
     loguru.logger.info(
         "Running training with the config...\n" + omegaconf.OmegaConf.to_yaml(config)
     )
     return run_training(config)
 
 
-def run_training(config: ExperimentConfigSchema):
+def run_training(config: RLExperimentConfigSchema):
     """Train an agent."""
 
     # Find device
