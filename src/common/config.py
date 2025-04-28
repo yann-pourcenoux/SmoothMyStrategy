@@ -16,13 +16,13 @@ class DataPreprocessingConfigSchema:
 
     Attributes:
         technical_indicators (list[str]): list of technical indicators to use.
-        start_date (str | None): start date to use for the data.
-        end_date (str | None): end date to use for the data.
+        start_date (str): start date to use for the data.
+        end_date (str): end date to use for the data.
     """
 
     technical_indicators: list[str] = field(default_factory=list)
-    start_date: str | None = "${train_environment.start_date}"
-    end_date: str | None = "${eval_environment.end_date}"
+    start_date: str = "${train_environment.start_date}"
+    end_date: str = "${eval_environment.end_date}"
 
 
 @pydantic.dataclasses.dataclass
@@ -57,14 +57,21 @@ class LoggingConfigSchema:
 
 
 @pydantic.dataclasses.dataclass
-class AgentConfigSchema:
-    """Configuration schema for the agent."""
+class RLAgentConfigSchema:
+    """Configuration schema for neural network-based agents."""
 
     hidden_sizes: tuple[int, ...] = field(default_factory=lambda: (256, 256))
     default_policy_scale: float = 1.0
     scale_lb: float = 0.1
     activation: str = "relu"
     model_path: str | None = None
+
+
+@pydantic.dataclasses.dataclass
+class QuantAgentConfigSchema:
+    """Configuration schema for traditional agents."""
+
+    algorithm_name: str | None = None
 
 
 @pydantic.dataclasses.dataclass
@@ -137,7 +144,7 @@ class AnalysisConfigSchema:
 
 
 @pydantic.dataclasses.dataclass
-class ExperimentConfigSchema:
+class BaseExperimentConfigSchema:
     """Configuration schema to train a model."""
 
     loading: DataLoaderConfigSchema = field(default_factory=DataLoaderConfigSchema)
@@ -164,17 +171,6 @@ class ExperimentConfigSchema:
             start_date="${train_environment.end_date}",
         )
     )
-
-    collector: CollectorConfigSchema = field(default_factory=CollectorConfigSchema)
-    replay_buffer: ReplayBufferConfigSchema = field(
-        default_factory=ReplayBufferConfigSchema
-    )
-
-    agent: AgentConfigSchema = field(default_factory=AgentConfigSchema)
-    loss: LossConfigSchema = field(default_factory=LossConfigSchema)
-    optimizer: OptimizerConfigSchema = field(default_factory=OptimizerConfigSchema)
-
-    training: TrainingConfigSchema = field(default_factory=TrainingConfigSchema)
     evaluation: EvaluationConfigSchema = field(default_factory=EvaluationConfigSchema)
 
     def __post_init__(self):
@@ -182,5 +178,31 @@ class ExperimentConfigSchema:
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
+@pydantic.dataclasses.dataclass
+class RLExperimentConfigSchema(BaseExperimentConfigSchema):
+    """Configuration schema for the RL experiment."""
+
+    collector: CollectorConfigSchema = field(default_factory=CollectorConfigSchema)
+    replay_buffer: ReplayBufferConfigSchema = field(
+        default_factory=ReplayBufferConfigSchema
+    )
+
+    agent: RLAgentConfigSchema = field(default_factory=RLAgentConfigSchema)
+    loss: LossConfigSchema = field(default_factory=LossConfigSchema)
+    optimizer: OptimizerConfigSchema = field(default_factory=OptimizerConfigSchema)
+
+    training: TrainingConfigSchema = field(default_factory=TrainingConfigSchema)
+
+
+@pydantic.dataclasses.dataclass
+class QuantExperimentConfigSchema(BaseExperimentConfigSchema):
+    """Configuration schema for the quant experiment."""
+
+    agent: QuantAgentConfigSchema = field(default_factory=QuantAgentConfigSchema)
+
+
 cs = ConfigStore.instance()
-cs.store(name="base_experiment", node=ExperimentConfigSchema)
+
+# Create convenience experiment configurations
+cs.store(name="rl_experiment", node=RLExperimentConfigSchema())
+cs.store(name="quant_experiment", node=QuantExperimentConfigSchema())

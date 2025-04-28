@@ -1,5 +1,5 @@
 defaults:
-  - base_experiment
+  - rl_experiment
   - eval_environment: same_time_train
   - preprocessing: all
   - _self_
