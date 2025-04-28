@@ -8,23 +8,35 @@ import omegaconf
 import testing.run_testing as run_testing
 import testing.visualize as visualize
 import training.run_training as run_training
-from common.config import ExperimentConfigSchema
+from common.config import QuantExperimentConfigSchema, RLExperimentConfigSchema
 
 
 class TestPipeline(unittest.TestCase):
     """Tests for the training, testing, and visualization pipeline."""
 
-    def test_pipeline(self):
-        """Test that the entire pipeline runs as expected."""
+    def test_rl_pipeline(self):
+        """Test that the entire RL pipeline runs as expected."""
         with hydra.initialize(
             version_base=None,
             config_path="config",
-            job_name="run_training_unit_test",
+            job_name="run_rl_pipeline_test",
         ):
-            config = hydra.compose(config_name="unittest_training")
-        config: ExperimentConfigSchema = omegaconf.OmegaConf.to_object(config)
+            config = hydra.compose(config_name="rl_pipeline")
+        config: RLExperimentConfigSchema = omegaconf.OmegaConf.to_object(config)
         model = run_training.run_training(config)
         eval_df = run_testing.run_testing(config, model)
+        visualize.visualize(data=eval_df)
+
+    def test_quant_pipeline(self):
+        """Test that the entire quant pipeline runs as expected."""
+        with hydra.initialize(
+            version_base=None,
+            config_path="config",
+            job_name="run_quant_pipeline_test",
+        ):
+            config = hydra.compose(config_name="quant_pipeline")
+        config: QuantExperimentConfigSchema = omegaconf.OmegaConf.to_object(config)
+        eval_df = run_testing.run_testing(config)
         visualize.visualize(data=eval_df)
 
 

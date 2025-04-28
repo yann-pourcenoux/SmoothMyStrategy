@@ -1,5 +1,5 @@
 defaults:
-  - base_experiment
+  - rl_experiment
   - _self_
 
 loading:

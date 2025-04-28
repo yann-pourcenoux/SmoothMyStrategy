@@ -1,7 +1,8 @@
-"""Module to evaluate an agent."""
+"""Module to evaluate an agent or algorithm."""
 
+import contextlib
 import time
-from typing import Dict
+from typing import Callable, Dict
 
 import pandas as pd
 import quantstats_lumi as qs
@@ -17,23 +18,38 @@ from environments.trading import TradingEnv
 
 def rollout(
     eval_env: EnvBase,
-    actor: ProbabilisticActor,
+    policy: Callable | torch.nn.Module,
     config: EvaluationConfigSchema,
 ) -> TensorDict:
-    """Rollout an environment according to an actor."""
-    actor.eval()
+    """Rollout an environment according to a policy (actor or algorithm wrapper)."""
+
+    # Check if the policy is an RL actor to apply RL-specific logic
+    is_rl_actor = isinstance(policy, ProbabilisticActor)
+
+    if is_rl_actor:
+        policy.eval()
+        exploration_context = set_exploration_type(
+            ExplorationType.from_str(config.exploration_type)
+        )
+    else:
+        # For non-RL policies (like our wrapper), create a null context
+        exploration_context = contextlib.nullcontext()
+
     with (
-        set_exploration_type(ExplorationType.from_str(config.exploration_type)),
+        exploration_context,
         torch.no_grad(),
         torch.inference_mode(),
     ):
         eval_rollout = eval_env.rollout(
             max_steps=config.eval_rollout_steps,
-            policy=actor,
+            policy=policy,
             auto_cast_to_device=True,
             break_when_any_done=True,
         )
-    actor.train()
+
+    if is_rl_actor:
+        policy.train()
+
     return eval_rollout
 
 
@@ -67,27 +83,41 @@ def compute_eval_metrics(df: pd.DataFrame) -> Dict[str, float]:
 
 def evaluate(
     eval_env: TradingEnv,
-    actor: ProbabilisticActor,
+    policy: Callable | torch.nn.Module,
     config: EvaluationConfigSchema,
-) -> Dict[str, float]:
+) -> tuple[Dict[str, float], pd.DataFrame]:
     """Run an evaluation rollout, log metrics and save data for analysis.
 
     Args:
         eval_env (EnvBase): Environment to evaluate.
-        actor (ProbabilisticActor): Actor to evaluate.
+        policy (Callable | torch.nn.Module): Policy to evaluate (RL actor or wrapped algorithm).
         config (EvaluationConfigSchema): Evaluation configuration.
 
     Returns:
-        Dict[str, float]: Metrics to log.
+        tuple[Dict[str, float], pd.DataFrame]: Metrics to log and the evaluation DataFrame.
     """
     eval_start = time.time()
-    eval_rollout = rollout(eval_env, actor, config)
+    eval_rollout = rollout(eval_env, policy, config)
     eval_time = time.time() - eval_start
 
     eval_df = eval_env.process_rollout(eval_rollout)
 
     metrics_to_log = {"timer/eval/time": eval_time}
-    metrics_to_log.update(compute_rl_eval_metrics(eval_rollout))
-    metrics_to_log.update(compute_eval_metrics(eval_df))
+
+    # Conditionally compute RL metrics if applicable (check if keys exist)
+    if "episode_reward" in eval_rollout["next"]:
+        metrics_to_log.update(compute_rl_eval_metrics(eval_rollout))
+    else:
+        # Add placeholder or skip RL metrics if not applicable
+        metrics_to_log["eval/reward"] = float("nan")
+        metrics_to_log["eval/episode_length"] = float("nan")
+        metrics_to_log["eval/average_reward_per_step"] = float("nan")
+
+    # Compute general financial metrics if possible
+    if not eval_df.empty and "daily_returns" in eval_df.columns:
+        metrics_to_log.update(compute_eval_metrics(eval_df))
+    else:
+        metrics_to_log["eval/sharpe_ratio"] = float("nan")
+        metrics_to_log["eval/calmar_ratio"] = float("nan")
 
     return metrics_to_log, eval_df

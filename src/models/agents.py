@@ -9,14 +9,14 @@ from torchrl.envs.utils import ExplorationType, set_exploration_type
 from torchrl.modules import MLP, ProbabilisticActor, ValueOperator
 from torchrl.modules.distributions import TanhNormal
 
-from common.config import AgentConfigSchema
+from common.config import RLAgentConfigSchema
 from models.models import get_activation
 
 
 def make_sac_agent(
     train_env: EnvBase,
     eval_env: EnvBase,
-    config: AgentConfigSchema,
+    config: RLAgentConfigSchema,
     device,
 ) -> tuple[nn.ModuleList, ProbabilisticActor]:
     """Make SAC agent."""
