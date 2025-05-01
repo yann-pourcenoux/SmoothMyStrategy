@@ -5,7 +5,7 @@ from typing import Iterable
 
 import pandas as pd
 
-from common.config import DataLoaderConfigSchema
+from config import DataLoaderConfigSchema
 from data.constants import DATASET_PATH
 
 

@@ -1,6 +1,7 @@
 """Module to create agents to be trained using reinforcement learning."""
 
 import torch
+from models.models import get_activation
 from tensordict.nn import InteractionType, TensorDictModule
 from tensordict.nn.distributions import NormalParamExtractor
 from torch import nn
@@ -9,8 +10,7 @@ from torchrl.envs.utils import ExplorationType, set_exploration_type
 from torchrl.modules import MLP, ProbabilisticActor, ValueOperator
 from torchrl.modules.distributions import TanhNormal
 
-from common.config import RLAgentConfigSchema
-from models.models import get_activation
+from config import RLAgentConfigSchema
 
 
 def make_sac_agent(

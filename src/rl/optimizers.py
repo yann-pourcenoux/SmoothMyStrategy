@@ -3,7 +3,7 @@
 from torch import optim
 from torchrl.objectives import LossModule
 
-from common.config import OptimizerConfigSchema
+from config import OptimizerConfigSchema
 
 
 def make_sac_optimizer(

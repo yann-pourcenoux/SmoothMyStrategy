@@ -4,11 +4,11 @@ import unittest
 
 import hydra
 import omegaconf
-
-import testing.run_testing as run_testing
-import testing.visualize as visualize
 import training.run_training as run_training
-from common.config import QuantExperimentConfigSchema, RLExperimentConfigSchema
+
+import evaluation.run_testing as run_testing
+import visualization.visualize as visualize
+from config import QuantExperimentConfigSchema, RLExperimentConfigSchema
 
 
 class TestPipeline(unittest.TestCase):

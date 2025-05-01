@@ -4,7 +4,7 @@ from typing import Iterable
 
 import pandas as pd
 
-from common.config import DataPreprocessingConfigSchema
+from config import DataPreprocessingConfigSchema
 from data.features import FeatureGenerator
 
 

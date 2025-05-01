@@ -4,7 +4,7 @@ import pandas as pd
 
 import data.loader
 import data.preprocessing
-from common.config import DataLoaderConfigSchema, DataPreprocessingConfigSchema
+from config import DataLoaderConfigSchema, DataPreprocessingConfigSchema
 
 
 class DataContainer:

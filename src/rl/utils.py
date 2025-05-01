@@ -13,7 +13,7 @@ from torchrl.data.replay_buffers.storages import LazyMemmapStorage
 from torchrl.envs import EnvBase
 from torchrl.modules import ProbabilisticActor
 
-from common.config import CollectorConfigSchema, ReplayBufferConfigSchema
+from config import CollectorConfigSchema, ReplayBufferConfigSchema
 
 
 def make_collector(
