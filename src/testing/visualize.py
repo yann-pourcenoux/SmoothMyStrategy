@@ -56,8 +56,10 @@ def load_data(
         data[f"weight_{ticker}"] = data[f"value_{ticker}"] / data["portfolio_value"]
 
     for ticker in tickers:
-        data[f"return_{ticker}"] = data[f"price_{ticker}"] / data[f"price_{ticker}"][0]
-    data["portfolio_return"] = data["portfolio_value"] / data["portfolio_value"][0]
+        data[f"return_{ticker}"] = (
+            data[f"price_{ticker}"] / data[f"price_{ticker}"].iloc[0]
+        )
+    data["portfolio_return"] = data["portfolio_value"] / data["portfolio_value"].iloc[0]
 
     return data, tickers
 
@@ -199,7 +201,7 @@ def visualize(
     # Display the HTML content
     if report_path:
         st.subheader("HTML Report")
-        with open(report_path, "r") as f:
+        with open(report_path) as f:
             html_content = f.read()
         components.html(html_content, height=600, scrolling=True)
 
