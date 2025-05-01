@@ -6,9 +6,6 @@ import numpy as np
 import omegaconf
 import pandas as pd
 import torch
-import training.evaluate as evaluate
-import training.logger as logger
-import training.utils as utils
 import wandb
 from omegaconf import DictConfig
 
@@ -16,6 +13,8 @@ import data.container
 import data.preprocessing
 import environments.trading
 import evaluation.analysis as analysis
+import evaluation.evaluate as evaluate
+import rl.utils as utils
 from config import (
     BaseExperimentConfigSchema,
     QuantExperimentConfigSchema,
@@ -98,7 +97,8 @@ def run_testing(
         config.evaluation,
     )
 
-    logger.log_df(eval_df, "eval_df")
+    # TODO: Where did this go?
+    # logger.log_df(eval_df, "eval_df")
 
     analysis.log_report(eval_df["daily_returns"], output_path=wandb.run.dir)
 
