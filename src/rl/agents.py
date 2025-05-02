@@ -9,8 +9,8 @@ from torchrl.envs.utils import ExplorationType, set_exploration_type
 from torchrl.modules import MLP, ProbabilisticActor, ValueOperator
 from torchrl.modules.distributions import TanhNormal
 
-from common.config import RLAgentConfigSchema
-from models.models import get_activation
+from config import RLAgentConfigSchema
+from rl.models import get_activation
 
 
 def make_sac_agent(

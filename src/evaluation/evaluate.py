@@ -12,7 +12,7 @@ from torchrl.envs import EnvBase
 from torchrl.envs.utils import ExplorationType, set_exploration_type
 from torchrl.modules import ProbabilisticActor
 
-from common.config import EvaluationConfigSchema
+from config import EvaluationConfigSchema
 from environments.trading import TradingEnv
 
 
