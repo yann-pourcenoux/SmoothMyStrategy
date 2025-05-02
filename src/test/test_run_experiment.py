@@ -4,9 +4,9 @@ import unittest
 
 import hydra
 import omegaconf
-import training.run_training as run_training
 
 import evaluation.run_testing as run_testing
+import rl.run_training as run_training
 import visualization.visualize as visualize
 from config import QuantExperimentConfigSchema, RLExperimentConfigSchema
 
