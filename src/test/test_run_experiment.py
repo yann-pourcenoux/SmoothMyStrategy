@@ -18,7 +18,7 @@ class TestPipeline(unittest.TestCase):
         """Test that the entire RL pipeline runs as expected."""
         with hydra.initialize(
             version_base=None,
-            config_path="config",
+            config_path="cfg",
             job_name="run_rl_pipeline_test",
         ):
             config = hydra.compose(config_name="rl_pipeline")
@@ -31,7 +31,7 @@ class TestPipeline(unittest.TestCase):
         """Test that the entire quant pipeline runs as expected."""
         with hydra.initialize(
             version_base=None,
-            config_path="config",
+            config_path="cfg",
             job_name="run_quant_pipeline_test",
         ):
             config = hydra.compose(config_name="quant_pipeline")
