@@ -2,8 +2,8 @@
 
 import os
 
-from testing.run_testing import main as run_testing
-from training.run_training import main as run_training
+from evaluation.run_testing import main as run_testing
+from rl.run_training import main as run_training
 
 
 def format_code():

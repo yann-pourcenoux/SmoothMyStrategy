@@ -14,14 +14,13 @@ import wandb
 import data.container
 import data.preprocessing
 import environments.trading
-import models.agents as agents
-import training.evaluate as evaluate
-import training.logger as logger
-import training.losses as losses
-import training.optimizers as optimizers
-import training.train as train
-import training.utils as utils
-from common.config import RLExperimentConfigSchema
+import evaluation.evaluate as evaluate
+import rl.agents as agents
+import rl.losses as losses
+import rl.optimizers as optimizers
+import rl.train as train
+import rl.utils as utils
+from config import RLExperimentConfigSchema
 from environments.trading import TradingEnv
 
 
@@ -177,7 +176,8 @@ def run_training(config: RLExperimentConfigSchema):
     collector.shutdown()
 
     # Save the exploration policy to file
-    logger.log_model(model)
+    # TODO: Where did this go?
+    # logger.log_model(model)
 
     wandb.finish()
 
