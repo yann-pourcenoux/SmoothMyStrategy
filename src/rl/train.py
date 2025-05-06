@@ -10,11 +10,11 @@ from torchrl.collectors import SyncDataCollector
 from torchrl.data import PrioritizedReplayBuffer, ReplayBuffer
 from torchrl.objectives import LossModule, SoftUpdate
 
-from config import TrainingConfigSchema
+from config.rl import RLTrainingConfigSchema
 
 
 def train(
-    config: TrainingConfigSchema,
+    config: RLTrainingConfigSchema,
     replay_buffer: ReplayBuffer | PrioritizedReplayBuffer,
     collector: SyncDataCollector,
     loss_module: LossModule,
@@ -26,9 +26,9 @@ def train(
     metrics_to_log = {}
     # Update the models
     training_start = time.time()
-    losses_values = TensorDict({}, batch_size=[config.num_steps_per_epoch])
+    losses_values = TensorDict({}, batch_size=[config.parameters.num_steps_per_epoch])
     for i in tqdm.tqdm(
-        range(config.num_steps_per_epoch),
+        range(config.parameters.num_steps_per_epoch),
         desc="Optimization",
         unit="step",
         leave=False,

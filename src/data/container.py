@@ -4,7 +4,7 @@ import pandas as pd
 
 import data.loader
 import data.preprocessing
-from config import DataLoaderConfigSchema, DataPreprocessingConfigSchema
+from config.data import DataLoaderConfigSchema, DataPreprocessingConfigSchema
 
 
 class DataContainer:
@@ -38,7 +38,6 @@ class DataContainer:
     def get_env_data(self, start_date: str | None = None, end_date: str | None = None):
         """Get the data for the environment."""
         df = self._select_time_range(start_date, end_date)
-
         dates = df.date.unique()
         tickers = df.ticker.unique()
 

@@ -1,30 +1,39 @@
 defaults:
-  - rl_experiment
-  - eval_environment: same_time_train
-  - preprocessing: all
+  - training
   - _self_
 
-loading:
-  tickers:
-    - AAPL
-
-train_environment:
-  cash: 1000.0
-  start_date: 2021-01-01
-  end_date: 2023-01-01
-
 training:
-  num_epochs: 25
-  num_steps_per_epoch: 1000
-
-replay_buffer:
-  batch_size: 512
-
-optimizer:
-  actor_lr: 1e-2
-  critic_lr: 1e-2
-  alpha_lr: 1e-2
-  weight_decay: 1e-8
+  loading:
+    tickers:
+      - AAPL
+  preprocessing:
+    technical_indicators:
+      - log_return_0
+      - log_return_1
+      - log_return_2
+      - log_return_3
+      - log_return_4
+      - log_return_5
+      - log_return_6
+      - log_return_7
+      - log_return_8
+      - log_return_9
+    start_date: ${training.environment.start_date}
+    end_date: ${training.environment.end_date}
+  environment:
+    cash: 1000.0
+    start_date: 2021-01-01
+    end_date: 2023-01-01
+  parameters:
+    num_epochs: 25
+    num_steps_per_epoch: 1000
+  replay_buffer:
+    batch_size: 512
+  optimizer:
+    actor_lr: 1e-2
+    critic_lr: 1e-2
+    alpha_lr: 1e-2
+    weight_decay: 1e-8
 
 agent:
   hidden_sizes:
@@ -33,3 +42,20 @@ agent:
 
 logging:
   project: single-ticker-experiment
+
+evaluation:
+  loading:
+    tickers: ${training.loading.tickers}
+  preprocessing:
+    technical_indicators: ${training.preprocessing.technical_indicators}
+    start_date: ${evaluation.environment.start_date}
+    end_date: ${evaluation.environment.end_date}
+  environment:
+    # TODO: Change this
+    start_date: ${training.environment.start_date}
+    end_date: ${training.environment.end_date}
+    cash: ${training.environment.cash}
+
+run_parameters:
+  seed: 0
+  device: null

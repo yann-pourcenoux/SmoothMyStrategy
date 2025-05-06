@@ -12,8 +12,8 @@ from torchrl.envs import EnvBase
 from torchrl.envs.utils import ExplorationType, set_exploration_type
 from torchrl.modules import ProbabilisticActor
 
-from config import EvaluationConfigSchema
-from environments.trading import TradingEnv
+from config.evaluation import EvaluationConfigSchema
+from environment.trading import TradingEnv
 
 
 def rollout(
@@ -29,7 +29,7 @@ def rollout(
     if is_rl_actor:
         policy.eval()
         exploration_context = set_exploration_type(
-            ExplorationType.from_str(config.exploration_type)
+            ExplorationType.from_str(config.parameters.exploration_type)
         )
     else:
         # For non-RL policies (like our wrapper), create a null context
@@ -41,7 +41,7 @@ def rollout(
         torch.inference_mode(),
     ):
         eval_rollout = eval_env.rollout(
-            max_steps=config.eval_rollout_steps,
+            max_steps=config.parameters.eval_rollout_steps,
             policy=policy,
             auto_cast_to_device=True,
             break_when_any_done=True,

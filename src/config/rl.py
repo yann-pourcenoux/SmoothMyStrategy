@@ -4,9 +4,15 @@ from dataclasses import field
 
 import pydantic
 
+from config.base import (
+    BaseAgentConfigSchema,
+    BasePolicyConfigSchema,
+    BaseTrainingConfigSchema,
+)
+
 
 @pydantic.dataclasses.dataclass
-class RLAgentConfigSchema:
+class RLAgentConfigSchema(BaseAgentConfigSchema):
     """Configuration schema for neural network-based agents."""
 
     hidden_sizes: tuple[int, ...] = field(default_factory=lambda: (256, 256))
@@ -56,7 +62,7 @@ class OptimizerConfigSchema:
 
 
 @pydantic.dataclasses.dataclass
-class TrainingConfigSchema:
+class TrainingParametersConfigSchema:
     """Configuration schema for the training."""
 
     num_epochs: int = 100
@@ -70,3 +76,24 @@ class CollectorConfigSchema:
     total_frames: int = -1
     frames_per_batch: int = 64
     storage_device: str = "cpu"
+
+
+@pydantic.dataclasses.dataclass
+class RLTrainingConfigSchema(BaseTrainingConfigSchema):
+    """Configuration schema for the RL experiment."""
+
+    collector: CollectorConfigSchema = field(default_factory=CollectorConfigSchema)
+    replay_buffer: ReplayBufferConfigSchema = field(
+        default_factory=ReplayBufferConfigSchema
+    )
+
+    loss: LossConfigSchema = field(default_factory=LossConfigSchema)
+    optimizer: OptimizerConfigSchema = field(default_factory=OptimizerConfigSchema)
+    parameters: TrainingParametersConfigSchema = field(
+        default_factory=TrainingParametersConfigSchema
+    )
+
+
+@pydantic.dataclasses.dataclass
+class RLPolicyConfigSchema(BasePolicyConfigSchema):
+    model_path: str

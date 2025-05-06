@@ -8,8 +8,8 @@ from torchrl.data import Bounded, Composite, Unbounded
 from torchrl.envs import CatTensors, Compose, DoubleToFloat, EnvBase, TransformedEnv
 from torchrl.envs.transforms import InitTracker, RewardSum, StepCounter, VecNorm
 
+from config.environment import EnvironmentConfigSchema
 from data.container import DataContainer
-from environments.config import EnvironmentConfigSchema
 
 
 class TradingEnv(EnvBase):

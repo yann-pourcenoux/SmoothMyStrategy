@@ -1,4 +1,4 @@
-"""Module to run a training."""
+"""Module to run the calibration of a quant algorithm."""
 
 import math
 from typing import Any, Dict
@@ -20,29 +20,29 @@ import rl.losses as losses
 import rl.optimizers as optimizers
 import rl.train as train
 import rl.utils as utils
-from config.run import TrainingConfigRunSchema
+from config import RLExperimentConfigSchema
 from environment.trading import TradingEnv
 
 
-@hydra.main(version_base=None, config_path="../cfg", config_name="rl_experiment")
+@hydra.main(version_base=None, config_path="cfg")
 def main(cfg: omegaconf.DictConfig):
     """Wrapper to start the training and interact with hydra."""
-    config: TrainingConfigRunSchema = omegaconf.OmegaConf.to_object(cfg)
+    config: RLExperimentConfigSchema = omegaconf.OmegaConf.to_object(cfg)
     loguru.logger.info(
         "Running training with the config...\n" + omegaconf.OmegaConf.to_yaml(config)
     )
     return run_training(config)
 
 
-def run_training(config: TrainingConfigRunSchema):
+def run_training(config: RLExperimentConfigSchema):
     """Train an agent."""
 
     # Find device
-    device = utils.get_device(config.run_parameters.device)
+    device = utils.get_device(config.device)
 
     # Set seed
-    torch.manual_seed(config.run_parameters.seed)
-    np.random.seed(config.run_parameters.seed)
+    torch.manual_seed(config.seed)
+    np.random.seed(config.seed)
 
     # Initialize wandb
     wandb.init(
@@ -55,29 +55,24 @@ def run_training(config: TrainingConfigRunSchema):
     )
 
     # Get environments
-    train_data_container = data.container.DataContainer(
-        loading_config=config.training.loading,
-        preprocessing_config=config.training.preprocessing,
-    )
-    eval_data_container = data.container.DataContainer(
-        loading_config=config.evaluation.loading,
-        preprocessing_config=config.evaluation.preprocessing,
+    data_container = data.container.DataContainer(
+        loading_config=config.loading, preprocessing_config=config.preprocessing
     )
 
     # Create environments
     train_env = environment.trading.apply_transforms(
         env=TradingEnv(
-            config=config.training.environment,
-            data_container=train_data_container,
-            seed=config.run_parameters.seed,
+            config=config.train_environment,
+            data_container=data_container,
+            seed=config.seed,
             device=device,
         ),
     )
     eval_env = environment.trading.apply_transforms(
         env=TradingEnv(
-            config=config.evaluation.environment,
-            data_container=eval_data_container,
-            seed=config.run_parameters.seed,
+            config=config.eval_environment,
+            data_container=data_container,
+            seed=config.seed,
             device=device,
         ),
     )
@@ -93,34 +88,34 @@ def run_training(config: TrainingConfigRunSchema):
     # Create SAC loss
     loss_module, target_net_updater = losses.make_loss_module(
         model=model,
-        config=config.training.loss,
+        config=config.loss,
     )
 
     # Create off-policy collector
     collector = utils.make_collector(
         train_env=train_env,
         actor_model_explore=exploration_policy,
-        config=config.training.collector,
+        config=config.collector,
         device=device,
-        seed=config.run_parameters.seed,
+        seed=config.seed,
     )
 
     # Create replay buffer
     replay_buffer = utils.make_replay_buffer(
-        config=config.training.replay_buffer, run_dir=wandb.run.dir
+        config=config.replay_buffer, run_dir=wandb.run.dir
     )
 
     # Create optimizers
     model_optimizers = optimizers.make_sac_optimizer(
         loss_module=loss_module,
-        config=config.training.optimizer,
+        config=config.optimizer,
     )
 
     schedulers = [
         torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer,
-            T_max=config.training.optimizer.T_max,
-            eta_min=config.training.optimizer.eta_min,
+            T_max=config.optimizer.T_max,
+            eta_min=config.optimizer.eta_min,
         )
         for optimizer in model_optimizers
     ]
@@ -132,7 +127,7 @@ def run_training(config: TrainingConfigRunSchema):
 
     # Main loop
     for epoch in tqdm.tqdm(
-        range(config.training.parameters.num_epochs),
+        range(config.training.num_epochs),
         unit="epoch",
         leave=True,
         desc="Training status",
@@ -147,8 +142,8 @@ def run_training(config: TrainingConfigRunSchema):
                 replay_buffer,
                 num_steps_per_episode=math.ceil(
                     collector.env._num_time_steps
-                    * config.training.environment.batch_size
-                    / config.training.collector.frames_per_batch
+                    * config.train_environment.batch_size
+                    / config.collector.frames_per_batch
                 ),
             )
         )

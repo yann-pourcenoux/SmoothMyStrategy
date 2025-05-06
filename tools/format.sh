@@ -2,7 +2,7 @@
 
 echo "Formatting code..."
 echo "Ruff check..."
-ruff check --fix .
+ruff check --fix --unsafe-fixes .
 echo "Ruff format..."
 ruff format .
 echo "Isort..."

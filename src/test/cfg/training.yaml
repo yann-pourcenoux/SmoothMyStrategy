@@ -1,5 +1,5 @@
 defaults:
-  - rl_experiment
+  - training
   - _self_
 
 loading:

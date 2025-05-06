@@ -11,16 +11,15 @@ from omegaconf import DictConfig
 
 import data.container
 import data.preprocessing
-import environments.trading
+import environment.trading
 import evaluation.analysis as analysis
 import evaluation.evaluate as evaluate
 import rl.utils as utils
-from config import (
-    BaseExperimentConfigSchema,
-    QuantExperimentConfigSchema,
-    RLExperimentConfigSchema,
-)
-from environments.trading import TradingEnv
+from config.base import BasePolicyConfigSchema
+from config.quant import QuantPolicyConfigSchema
+from config.rl import RLPolicyConfigSchema
+from config.run import EvaluationRunConfigSchema
+from environment.trading import TradingEnv
 from quant.base import TraditionalAlgorithmPolicyWrapper
 from quant.buy_everyday import BuySharesModule
 
@@ -28,15 +27,38 @@ from quant.buy_everyday import BuySharesModule
 @hydra.main(version_base=None, config_path="../config", config_name="base_experiment")
 def main(cfg: DictConfig):
     """Wrapper to start the testing and interact with hydra."""
-    config: BaseExperimentConfigSchema = omegaconf.OmegaConf.to_object(cfg)
+    config: EvaluationRunConfigSchema = omegaconf.OmegaConf.to_object(cfg)
     loguru.logger.info(
         "Running training with the config...\n" + omegaconf.OmegaConf.to_yaml(config)
     )
     return run_testing(config)
 
 
+def load_policy(policy_config: BasePolicyConfigSchema):
+    # Load the model
+    if isinstance(policy_config, RLPolicyConfigSchema):
+        model = torch.load(policy_config.model_path, weights_only=False)
+        model[0]
+    # Handle quant models
+    elif isinstance(policy_config, QuantPolicyConfigSchema):
+        # Create the quant algorithm based on configuration
+        if policy_config.algorithm_name == "BuyOneShareEveryDay":
+            # Standard scaling used in TradingEnv
+            action_scaling = 100.0
+            quant_algorithm = BuySharesModule(scaling_factor=action_scaling)
+            # Wrap the algorithm to make it compatible with the evaluation
+            TraditionalAlgorithmPolicyWrapper(
+                algorithm=quant_algorithm, action_scaling=action_scaling
+            )
+        else:
+            # Add more algorithm types here as needed
+            raise ValueError(f"Unknown quant algorithm: {policy_config.algorithm_name}")
+    else:
+        raise ValueError("Unknown config type.")
+
+
 def run_testing(
-    config: BaseExperimentConfigSchema, model: torch.nn.Module | None = None
+    config: EvaluationRunConfigSchema, model: torch.nn.Module | None = None
 ) -> pd.DataFrame:
     # Find device
     device = utils.get_device(config.device)
@@ -60,7 +82,7 @@ def run_testing(
         loading_config=config.loading, preprocessing_config=config.preprocessing
     )
 
-    eval_env = environments.trading.apply_transforms(
+    eval_env = environment.trading.apply_transforms(
         env=TradingEnv(
             config=config.eval_environment,
             data_container=data_container,
@@ -69,26 +91,10 @@ def run_testing(
         ),
     )
 
-    # Load the model
-    if isinstance(config, RLExperimentConfigSchema) and model is None:
-        model = torch.load(config.agent.model_path, weights_only=False)
-        exploration_policy = model[0]
-    # Handle quant models
-    elif isinstance(config, QuantExperimentConfigSchema):
-        # Create the quant algorithm based on configuration
-        if config.agent.algorithm_name == "BuyOneShareEveryDay":
-            # Standard scaling used in TradingEnv
-            action_scaling = 100.0
-            quant_algorithm = BuySharesModule(scaling_factor=action_scaling)
-            # Wrap the algorithm to make it compatible with the evaluation
-            exploration_policy = TraditionalAlgorithmPolicyWrapper(
-                algorithm=quant_algorithm, action_scaling=action_scaling
-            )
-        else:
-            # Add more algorithm types here as needed
-            raise ValueError(f"Unknown quant algorithm: {config.agent.algorithm_name}")
+    if model is None:
+        exploration_policy = load_policy(config.policy)
     else:
-        exploration_policy = model[0] if model is not None else None
+        exploration_policy = model[0]
 
     # Compute metrics
     metrics_to_log, eval_df = evaluate.evaluate(

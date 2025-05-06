@@ -1,5 +1,5 @@
 defaults:
-  - quant_experiment
+  - evaluation
   - _self_
 
 loading:
