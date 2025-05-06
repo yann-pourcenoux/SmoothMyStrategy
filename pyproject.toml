@@ -51,5 +51,5 @@ dependencies = [
 
 [project.scripts]
 run_training = "entrypoints:run_training"
-run_testing = "entrypoints:run_testing"
+run_evaluation = "entrypoints:run_evaluation"
 format_code = "entrypoints:format_code"

@@ -24,7 +24,7 @@ from quant.base import TraditionalAlgorithmPolicyWrapper
 from quant.buy_everyday import BuySharesModule
 
 
-@hydra.main(version_base=None, config_path="../config", config_name="base_experiment")
+@hydra.main(version_base=None, config_path="../cfg", config_name="evaluation")
 def main(cfg: DictConfig):
     """Wrapper to start the testing and interact with hydra."""
     config: EvaluationRunConfigSchema = omegaconf.OmegaConf.to_object(cfg)
