@@ -26,6 +26,7 @@ def rollout(
     # Check if the policy is an RL actor to apply RL-specific logic
     is_rl_actor = isinstance(policy, ProbabilisticActor)
 
+    print(policy)
     if is_rl_actor:
         policy.eval()
         exploration_context = set_exploration_type(
@@ -46,6 +47,8 @@ def rollout(
             auto_cast_to_device=True,
             break_when_any_done=True,
         )
+    print(eval_rollout)
+    print(eval_rollout["action"][0, :10, :])
 
     if is_rl_actor:
         policy.train()
@@ -103,21 +106,7 @@ def evaluate(
     eval_df = eval_env.process_rollout(eval_rollout)
 
     metrics_to_log = {"timer/eval/time": eval_time}
-
-    # Conditionally compute RL metrics if applicable (check if keys exist)
-    if "episode_reward" in eval_rollout["next"]:
-        metrics_to_log.update(compute_rl_eval_metrics(eval_rollout))
-    else:
-        # Add placeholder or skip RL metrics if not applicable
-        metrics_to_log["eval/reward"] = float("nan")
-        metrics_to_log["eval/episode_length"] = float("nan")
-        metrics_to_log["eval/average_reward_per_step"] = float("nan")
-
-    # Compute general financial metrics if possible
-    if not eval_df.empty and "daily_returns" in eval_df.columns:
-        metrics_to_log.update(compute_eval_metrics(eval_df))
-    else:
-        metrics_to_log["eval/sharpe_ratio"] = float("nan")
-        metrics_to_log["eval/calmar_ratio"] = float("nan")
+    metrics_to_log.update(compute_rl_eval_metrics(eval_rollout))
+    metrics_to_log.update(compute_eval_metrics(eval_df))
 
     return metrics_to_log, eval_df

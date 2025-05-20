@@ -44,13 +44,9 @@ def load_policy(policy_config: BasePolicyConfigSchema):
     elif isinstance(policy_config, QuantPolicyConfigSchema):
         # Create the quant algorithm based on configuration
         if policy_config.algorithm_name == "BuyOneShareEveryDay":
-            # Standard scaling used in TradingEnv
-            action_scaling = 100.0
-            quant_algorithm = BuySharesModule(scaling_factor=action_scaling)
+            quant_algorithm = BuySharesModule()
             # Wrap the algorithm to make it compatible with the evaluation
-            return TraditionalAlgorithmPolicyWrapper(
-                algorithm=quant_algorithm, action_scaling=action_scaling
-            )
+            return TraditionalAlgorithmPolicyWrapper(algorithm=quant_algorithm)
         else:
             # Add more algorithm types here as needed
             raise ValueError(f"Unknown quant algorithm: {policy_config.algorithm_name}")
