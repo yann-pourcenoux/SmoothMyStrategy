@@ -16,4 +16,4 @@ class QuantAgentConfigSchema:
 class QuantPolicyConfigSchema(BasePolicyConfigSchema):
     """Policy."""
 
-    algorithm_name: str
+    algorithm_name: str = ""

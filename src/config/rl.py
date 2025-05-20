@@ -96,4 +96,4 @@ class RLTrainingConfigSchema(BaseTrainingConfigSchema):
 
 @pydantic.dataclasses.dataclass
 class RLPolicyConfigSchema(BasePolicyConfigSchema):
-    model_path: str
+    model_path: str = ""

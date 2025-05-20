@@ -50,6 +50,7 @@ dependencies = [
 ]
 
 [project.scripts]
-run_training = "entrypoints:run_training"
+format = "entrypoints:format"
 run_evaluation = "entrypoints:run_evaluation"
-format_code = "entrypoints:format_code"
+run_training = "entrypoints:run_training"
+run_visualization = "entrypoints:run_visualization"

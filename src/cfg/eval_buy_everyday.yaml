@@ -1,5 +1,5 @@
 defaults:
-  - rl_evaluation
+  - quant_evaluation
   - _self_
 
 evaluation:
@@ -9,15 +9,6 @@ evaluation:
   preprocessing:
     technical_indicators:
       - log_return_0
-      - log_return_1
-      - log_return_2
-      - log_return_3
-      - log_return_4
-      - log_return_5
-      - log_return_6
-      - log_return_7
-      - log_return_8
-      - log_return_9
     start_date: ${evaluation.environment.start_date}
     end_date: ${evaluation.environment.end_date}
   environment:
@@ -30,4 +21,4 @@ run_parameters:
   device: null
 
 policy:
-  model_path: null
+  algorithm_name: "BuyOneShareEveryDay"

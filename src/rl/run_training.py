@@ -15,6 +15,7 @@ import data.container
 import data.preprocessing
 import environment.trading
 import evaluation.evaluate as evaluate
+import logger as logger
 import rl.agents as agents
 import rl.losses as losses
 import rl.optimizers as optimizers
@@ -181,8 +182,7 @@ def run_training(config: TrainingConfigRunSchema):
     collector.shutdown()
 
     # Save the exploration policy to file
-    # TODO: Where did this go?
-    # logger.log_model(model)
+    logger.log_model(model)
 
     wandb.finish()
 

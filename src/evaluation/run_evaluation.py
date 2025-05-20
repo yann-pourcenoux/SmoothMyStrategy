@@ -14,6 +14,7 @@ import data.preprocessing
 import environment.trading
 import evaluation.analysis as analysis
 import evaluation.evaluate as evaluate
+import logger as logger
 import rl.utils as utils
 from config.base import BasePolicyConfigSchema
 from config.quant import QuantPolicyConfigSchema
@@ -38,7 +39,7 @@ def load_policy(policy_config: BasePolicyConfigSchema):
     # Load the model
     if isinstance(policy_config, RLPolicyConfigSchema):
         model = torch.load(policy_config.model_path, weights_only=False)
-        model[0]
+        return model[0]
     # Handle quant models
     elif isinstance(policy_config, QuantPolicyConfigSchema):
         # Create the quant algorithm based on configuration
@@ -47,7 +48,7 @@ def load_policy(policy_config: BasePolicyConfigSchema):
             action_scaling = 100.0
             quant_algorithm = BuySharesModule(scaling_factor=action_scaling)
             # Wrap the algorithm to make it compatible with the evaluation
-            TraditionalAlgorithmPolicyWrapper(
+            return TraditionalAlgorithmPolicyWrapper(
                 algorithm=quant_algorithm, action_scaling=action_scaling
             )
         else:
@@ -61,11 +62,11 @@ def run_testing(
     config: EvaluationRunConfigSchema, model: torch.nn.Module | None = None
 ) -> pd.DataFrame:
     # Find device
-    device = utils.get_device(config.device)
+    device = utils.get_device(config.run_parameters.device)
 
     # Set seed
-    torch.manual_seed(config.seed)
-    np.random.seed(config.seed)
+    torch.manual_seed(config.run_parameters.seed)
+    np.random.seed(config.run_parameters.seed)
 
     # Initialize wandb
     wandb.init(
@@ -79,14 +80,15 @@ def run_testing(
 
     # Get environments
     data_container = data.container.DataContainer(
-        loading_config=config.loading, preprocessing_config=config.preprocessing
+        loading_config=config.evaluation.loading,
+        preprocessing_config=config.evaluation.preprocessing,
     )
 
     eval_env = environment.trading.apply_transforms(
         env=TradingEnv(
-            config=config.eval_environment,
+            config=config.evaluation.environment,
             data_container=data_container,
-            seed=config.seed,
+            seed=config.run_parameters.seed,
             device=device,
         ),
     )
@@ -103,8 +105,7 @@ def run_testing(
         config.evaluation,
     )
 
-    # TODO: Where did this go?
-    # logger.log_df(eval_df, "eval_df")
+    logger.log_df(eval_df, "eval_df")
 
     analysis.log_report(eval_df["daily_returns"], output_path=wandb.run.dir)
 

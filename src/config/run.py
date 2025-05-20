@@ -13,8 +13,8 @@ from config.base import (
     BaseTrainingConfigSchema,
 )
 from config.evaluation import EvaluationConfigSchema
-from config.quant import QuantAgentConfigSchema
-from config.rl import RLAgentConfigSchema, RLTrainingConfigSchema
+from config.quant import QuantAgentConfigSchema, QuantPolicyConfigSchema
+from config.rl import RLAgentConfigSchema, RLPolicyConfigSchema, RLTrainingConfigSchema
 
 
 @pydantic.dataclasses.dataclass
@@ -54,6 +54,7 @@ class BaseTrainingRunConfigSchema:
 
 @pydantic.dataclasses.dataclass
 class EvaluationRunConfigSchema:
+    logging: LoggingConfigSchema = field(default_factory=LoggingConfigSchema)
     evaluation: EvaluationConfigSchema = field(default_factory=EvaluationConfigSchema)
     policy: BasePolicyConfigSchema = field(default_factory=BasePolicyConfigSchema)
     run_parameters: RunParameters = field(default_factory=RunParameters)
@@ -72,8 +73,19 @@ class TrainingConfigRunSchema(BaseTrainingRunConfigSchema):
     agent: RLAgentConfigSchema = field(default_factory=RLAgentConfigSchema)
 
 
+@pydantic.dataclasses.dataclass
+class RLEvaluationRunConfigSchema(EvaluationRunConfigSchema):
+    policy: RLPolicyConfigSchema = field(default_factory=RLPolicyConfigSchema)
+
+
+@pydantic.dataclasses.dataclass
+class QuantEvaluationRunConfigSchema(EvaluationRunConfigSchema):
+    policy: QuantPolicyConfigSchema = field(default_factory=QuantPolicyConfigSchema)
+
+
 cs = ConfigStore.instance()
 
 cs.store(name="calibration", node=CalibrationRunConfigSchema())
 cs.store(name="training", node=TrainingConfigRunSchema())
-cs.store(name="evaluation", node=EvaluationRunConfigSchema())
+cs.store(name="rl_evaluation", node=RLEvaluationRunConfigSchema())
+cs.store(name="quant_evaluation", node=QuantEvaluationRunConfigSchema())
