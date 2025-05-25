@@ -24,3 +24,6 @@ run_parameters:
 
 policy:
   algorithm_name: "BuyOneShareEveryDay"
+
+logging:
+  online: False

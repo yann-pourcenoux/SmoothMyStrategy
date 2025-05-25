@@ -22,3 +22,6 @@ evaluation:
 run_parameters:
   seed: 0
   device: null
+
+logging:
+  online: False
