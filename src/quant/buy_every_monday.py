@@ -25,5 +25,4 @@ class BuySharesModule(torch.nn.Module):
             Tensor containing action values (buy one share for each ticker).
         """
         # Action is +1 share for all tickers (scaled by the scaling factor)
-        print(adj_close.shape)
         return torch.ones_like(adj_close) / 100

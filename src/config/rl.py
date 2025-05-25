@@ -51,8 +51,8 @@ class OptimizerConfigSchema:
     """Configuration schema for the optimizer."""
 
     actor_lr: float = 3.0e-4
-    critic_lr: float = "${optimizer.actor_lr}"
-    alpha_lr: float = "${optimizer.actor_lr}"
+    critic_lr: float = "${training.optimizer.actor_lr}"
+    alpha_lr: float = "${training.optimizer.actor_lr}"
 
     weight_decay: float = 0.0
     adam_eps: float = 1.0e-8

@@ -26,7 +26,6 @@ def rollout(
     # Check if the policy is an RL actor to apply RL-specific logic
     is_rl_actor = isinstance(policy, ProbabilisticActor)
 
-    print(policy)
     if is_rl_actor:
         policy.eval()
         exploration_context = set_exploration_type(
@@ -47,8 +46,6 @@ def rollout(
             auto_cast_to_device=True,
             break_when_any_done=True,
         )
-    print(eval_rollout)
-    print(eval_rollout["action"][0, :10, :])
 
     if is_rl_actor:
         policy.train()

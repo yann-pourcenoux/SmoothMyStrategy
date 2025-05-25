@@ -21,8 +21,7 @@ from config.quant import QuantPolicyConfigSchema
 from config.rl import RLPolicyConfigSchema
 from config.run import EvaluationRunConfigSchema
 from environment.trading import TradingEnv
-from quant.base import TraditionalAlgorithmPolicyWrapper
-from quant.buy_everyday import BuySharesModule
+from quant.buy_everyday import BuySharesPolicy
 
 
 @hydra.main(version_base=None, config_path="../cfg", config_name="evaluation")
@@ -44,9 +43,7 @@ def load_policy(policy_config: BasePolicyConfigSchema):
     elif isinstance(policy_config, QuantPolicyConfigSchema):
         # Create the quant algorithm based on configuration
         if policy_config.algorithm_name == "BuyOneShareEveryDay":
-            quant_algorithm = BuySharesModule()
-            # Wrap the algorithm to make it compatible with the evaluation
-            return TraditionalAlgorithmPolicyWrapper(algorithm=quant_algorithm)
+            return BuySharesPolicy()
         else:
             # Add more algorithm types here as needed
             raise ValueError(f"Unknown quant algorithm: {policy_config.algorithm_name}")
