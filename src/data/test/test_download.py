@@ -5,8 +5,6 @@ import os
 import tempfile
 import unittest
 
-import pytest
-
 import data.download
 
 
@@ -23,7 +21,6 @@ class TestDownload(unittest.TestCase):
         self.directory_name = self.directory.name
         self.ticker = "AAPL"
 
-    @pytest.mark.unparallel
     def test_download_tickers(self):
         """Download one ticker and verify that the file exists."""
         data.download.download_tickers([self.ticker], self.directory_name)
