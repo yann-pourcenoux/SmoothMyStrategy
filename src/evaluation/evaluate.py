@@ -12,8 +12,8 @@ from torchrl.envs import EnvBase
 from torchrl.envs.utils import ExplorationType, set_exploration_type
 from torchrl.modules import ProbabilisticActor
 
-from config import EvaluationConfigSchema
-from environments.trading import TradingEnv
+from config.evaluation import EvaluationConfigSchema
+from environment.trading import TradingEnv
 
 
 def rollout(
@@ -29,7 +29,7 @@ def rollout(
     if is_rl_actor:
         policy.eval()
         exploration_context = set_exploration_type(
-            ExplorationType.from_str(config.exploration_type)
+            ExplorationType.from_str(config.parameters.exploration_type)
         )
     else:
         # For non-RL policies (like our wrapper), create a null context
@@ -41,7 +41,7 @@ def rollout(
         torch.inference_mode(),
     ):
         eval_rollout = eval_env.rollout(
-            max_steps=config.eval_rollout_steps,
+            max_steps=config.parameters.eval_rollout_steps,
             policy=policy,
             auto_cast_to_device=True,
             break_when_any_done=True,
@@ -103,21 +103,7 @@ def evaluate(
     eval_df = eval_env.process_rollout(eval_rollout)
 
     metrics_to_log = {"timer/eval/time": eval_time}
-
-    # Conditionally compute RL metrics if applicable (check if keys exist)
-    if "episode_reward" in eval_rollout["next"]:
-        metrics_to_log.update(compute_rl_eval_metrics(eval_rollout))
-    else:
-        # Add placeholder or skip RL metrics if not applicable
-        metrics_to_log["eval/reward"] = float("nan")
-        metrics_to_log["eval/episode_length"] = float("nan")
-        metrics_to_log["eval/average_reward_per_step"] = float("nan")
-
-    # Compute general financial metrics if possible
-    if not eval_df.empty and "daily_returns" in eval_df.columns:
-        metrics_to_log.update(compute_eval_metrics(eval_df))
-    else:
-        metrics_to_log["eval/sharpe_ratio"] = float("nan")
-        metrics_to_log["eval/calmar_ratio"] = float("nan")
+    metrics_to_log.update(compute_rl_eval_metrics(eval_rollout))
+    metrics_to_log.update(compute_eval_metrics(eval_df))
 
     return metrics_to_log, eval_df

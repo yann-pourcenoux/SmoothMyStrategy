@@ -8,8 +8,8 @@ from torchrl.data import Bounded, Composite, Unbounded
 from torchrl.envs import CatTensors, Compose, DoubleToFloat, EnvBase, TransformedEnv
 from torchrl.envs.transforms import InitTracker, RewardSum, StepCounter, VecNorm
 
+from config.environment import EnvironmentConfigSchema
 from data.container import DataContainer
-from environments.config import EnvironmentConfigSchema
 
 
 class TradingEnv(EnvBase):
@@ -88,16 +88,16 @@ class TradingEnv(EnvBase):
         return self._perform_trading_action(tensordict)
 
     def _process_actions(self, tensordict: TensorDict):
-        return tensordict["action"] * 100
+        return tensordict["action"]
 
     def _inv_process_actions(self, tensordict: TensorDict):
-        return tensordict["action"] / 100
+        return tensordict["action"]
 
     def _get_action_spec(self):
         return Bounded(
             shape=self.batch_size + (self._num_tickers,),
-            low=-1,
-            high=1,
+            low=-100,
+            high=100,
             device=self.device,
         )
 

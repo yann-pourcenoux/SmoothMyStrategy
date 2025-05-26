@@ -1,0 +1,29 @@
+defaults:
+  - quant_evaluation
+  - _self_
+
+evaluation:
+  loading:
+    tickers:
+      - AAPL
+  preprocessing:
+    technical_indicators:
+      - log_return_0
+      - log_return_1
+      - log_return_2
+    start_date: ${evaluation.environment.start_date}
+    end_date: ${evaluation.environment.end_date}
+  environment:
+    start_date: 2021-01-01
+    end_date: 2023-01-01
+    cash: 100000.0
+
+run_parameters:
+  seed: 0
+  device: null
+
+policy:
+  algorithm_name: "BuyOneShareEveryDay"
+
+logging:
+  online: False

@@ -7,10 +7,10 @@ import torch
 from torchrl.envs import EnvBase
 from torchrl.envs.utils import check_env_specs
 
-from config import DataLoaderConfigSchema, DataPreprocessingConfigSchema
+from config.data import DataLoaderConfigSchema, DataPreprocessingConfigSchema
+from config.environment import EnvironmentConfigSchema
 from data.container import DataContainer
-from environments.config import EnvironmentConfigSchema
-from environments.trading import TradingEnv, apply_transforms
+from environment.trading import TradingEnv, apply_transforms
 
 START_DATE = "2020-01-01"
 END_DATE = "2024-01-01"

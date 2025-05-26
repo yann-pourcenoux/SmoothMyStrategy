@@ -5,10 +5,14 @@ import unittest
 import hydra
 import omegaconf
 
-import evaluation.run_testing as run_testing
+import evaluation.run_evaluation as run_evaluation
 import rl.run_training as run_training
 import visualization.visualize as visualize
-from config import QuantExperimentConfigSchema, RLExperimentConfigSchema
+from config.run import (
+    QuantEvaluationRunConfigSchema,
+    RLEvaluationRunConfigSchema,
+    TrainingConfigRunSchema,
+)
 
 
 class TestPipeline(unittest.TestCase):
@@ -21,10 +25,22 @@ class TestPipeline(unittest.TestCase):
             config_path="cfg",
             job_name="run_rl_pipeline_test",
         ):
-            config = hydra.compose(config_name="rl_pipeline")
-        config: RLExperimentConfigSchema = omegaconf.OmegaConf.to_object(config)
-        model = run_training.run_training(config)
-        eval_df = run_testing.run_testing(config, model)
+            train_config = hydra.compose(config_name="rl_train")
+        train_config: TrainingConfigRunSchema = omegaconf.OmegaConf.to_object(
+            train_config
+        )
+        model = run_training.run_training(train_config)
+
+        with hydra.initialize(
+            version_base=None,
+            config_path="cfg",
+            job_name="run_rl_evaluation_test",
+        ):
+            eval_config = hydra.compose(config_name="rl_eval")
+        eval_config: RLEvaluationRunConfigSchema = omegaconf.OmegaConf.to_object(
+            eval_config
+        )
+        eval_df = run_evaluation.run_testing(eval_config, model)
         visualize.visualize(data=eval_df)
 
     def test_quant_pipeline(self):
@@ -34,9 +50,9 @@ class TestPipeline(unittest.TestCase):
             config_path="cfg",
             job_name="run_quant_pipeline_test",
         ):
-            config = hydra.compose(config_name="quant_pipeline")
-        config: QuantExperimentConfigSchema = omegaconf.OmegaConf.to_object(config)
-        eval_df = run_testing.run_testing(config)
+            config = hydra.compose(config_name="quant_eval")
+        config: QuantEvaluationRunConfigSchema = omegaconf.OmegaConf.to_object(config)
+        eval_df = run_evaluation.run_testing(config)
         visualize.visualize(data=eval_df)
 
 

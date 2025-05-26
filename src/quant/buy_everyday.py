@@ -1,28 +1,29 @@
 """Algorithm that buys one share everyday."""
 
 import torch
+from torchrl.modules import SafeModule
 
 
 class BuySharesModule(torch.nn.Module):
     """Module that implements a simple buy-shares strategy."""
 
-    def __init__(self, scaling_factor: float = 1.0):
-        """Initialize the BuySharesModule.
-
-        Args:
-            scaling_factor: Factor to scale the raw action values by (default: 1.0).
-        """
+    def __init__(self):
+        """Initialize the BuySharesModule."""
         super().__init__()
-        self.scaling_factor = scaling_factor
 
-    def forward(self, adj_close: torch.Tensor) -> torch.Tensor:
+    def forward(self, num_shares_owned: torch.Tensor) -> torch.Tensor:
         """Implement a strategy to buy shares for all tickers.
 
         Args:
-            adj_close: Tensor containing closing prices.
+            num_shares_owned (torch.Tensor): Tensor containing number of shares owned.
 
         Returns:
             Tensor containing action values (buy one share for each ticker).
         """
-        # Action is +1 share for all tickers (scaled by the scaling factor)
-        return torch.ones_like(adj_close) / 100
+        return torch.ones_like(num_shares_owned)
+
+
+def BuySharesPolicy():
+    return SafeModule(
+        module=BuySharesModule(), in_keys=["num_shares_owned"], out_keys=["action"]
+    )

@@ -1,2 +1,0 @@
-start_date: ${train_environment.start_date}
-end_date: ${train_environment.end_date}
