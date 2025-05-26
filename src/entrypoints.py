@@ -11,9 +11,14 @@ def format():
     os.system("bash tools/format.sh")
 
 
+def run_test():
+    """Run the tests."""
+    os.system("pytest -n auto src")
+
+
 def run_visualization():
     """Format the code using ruff."""
     os.system("streamlit run src/visualization/visualize.py")
 
 
-__all__ = ["format", "run_evaluation", "run_training", "run_visualization"]
+__all__ = ["format", "run_evaluation", "run_training", "run_visualization", "run_test"]
