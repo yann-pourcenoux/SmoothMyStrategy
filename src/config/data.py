@@ -16,8 +16,8 @@ class DataPreprocessingConfigSchema:
     """
 
     technical_indicators: list[str] = field(default_factory=list)
-    start_date: str = "${train_environment.start_date}"
-    end_date: str = "${eval_environment.end_date}"
+    start_date: str = field(default_factory=str)
+    end_date: str = field(default_factory=str)
 
 
 @pydantic.dataclasses.dataclass

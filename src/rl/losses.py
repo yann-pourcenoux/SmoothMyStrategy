@@ -3,7 +3,7 @@
 from torchrl.objectives import SoftUpdate
 from torchrl.objectives.sac import SACLoss
 
-from config import LossConfigSchema
+from config.rl import LossConfigSchema
 
 
 def make_loss_module(model, config: LossConfigSchema) -> tuple[SACLoss, SoftUpdate]:
