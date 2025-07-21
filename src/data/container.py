@@ -27,9 +27,7 @@ class DataContainer:
         )
         self.num_tickers = len(self._loading_config.tickers)
 
-    def _select_time_range(
-        self, start_date: str | None = None, end_date: str | None = None
-    ):
+    def _select_time_range(self, start_date: str | None = None, end_date: str | None = None):
         """Select the time range for the environment."""
         df = data.preprocessing.select_time_range(self.data, start_date, end_date)
         df.index = df.date.factorize()[0]

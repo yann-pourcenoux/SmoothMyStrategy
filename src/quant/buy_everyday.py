@@ -24,6 +24,4 @@ class BuySharesModule(torch.nn.Module):
 
 
 def BuySharesPolicy():
-    return SafeModule(
-        module=BuySharesModule(), in_keys=["num_shares_owned"], out_keys=["action"]
-    )
+    return SafeModule(module=BuySharesModule(), in_keys=["num_shares_owned"], out_keys=["action"])

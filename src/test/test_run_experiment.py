@@ -26,9 +26,7 @@ class TestPipeline(unittest.TestCase):
             job_name="run_rl_pipeline_test",
         ):
             train_config = hydra.compose(config_name="rl_train")
-        train_config: TrainingConfigRunSchema = omegaconf.OmegaConf.to_object(
-            train_config
-        )
+        train_config: TrainingConfigRunSchema = omegaconf.OmegaConf.to_object(train_config)
         model = run_training.run_training(train_config)
 
         with hydra.initialize(
@@ -37,9 +35,7 @@ class TestPipeline(unittest.TestCase):
             job_name="run_rl_evaluation_test",
         ):
             eval_config = hydra.compose(config_name="rl_eval")
-        eval_config: RLEvaluationRunConfigSchema = omegaconf.OmegaConf.to_object(
-            eval_config
-        )
+        eval_config: RLEvaluationRunConfigSchema = omegaconf.OmegaConf.to_object(eval_config)
         eval_df = run_evaluation.run_testing(eval_config, model)
         visualize.visualize(data=eval_df)
 

@@ -97,9 +97,7 @@ class TestTradingEnv(BaseTestTradingEnvironment, unittest.TestCase):
     def test_action_one_ticker(self):
         """Test when a action has to be performed on an env with only one ticker."""
         batch_size = 2
-        env = _create_env(
-            self.environment_class, batch_size=batch_size, tickers=["AAPL"]
-        )
+        env = _create_env(self.environment_class, batch_size=batch_size, tickers=["AAPL"])
 
         tensordict = env.reset()
         action = torch.ones((batch_size, 1), dtype=torch.float32, device=env.device)
@@ -120,17 +118,13 @@ class TestTradingEnv(BaseTestTradingEnvironment, unittest.TestCase):
             num_shares_owned_day_1 * price_day_1, dim=-1, keepdim=True
         )
 
-        reward = torch.log(value_day_1 / value_day_0) - torch.log(
-            price_day_1 / price_day_0
-        )
+        reward = torch.log(value_day_1 / value_day_0) - torch.log(price_day_1 / price_day_0)
 
         tensordict = env._perform_trading_action(tensordict)
 
         self.assertTrue(torch.all(tensordict["reward"] == reward))
         self.assertTrue(torch.all(tensordict["cash"] == cash_day_1))
-        self.assertTrue(
-            torch.all(tensordict["num_shares_owned"] == num_shares_owned_day_1)
-        )
+        self.assertTrue(torch.all(tensordict["num_shares_owned"] == num_shares_owned_day_1))
 
 
 if __name__ == "__main__":

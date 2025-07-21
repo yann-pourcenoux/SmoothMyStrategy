@@ -138,9 +138,7 @@ def run_training(config: TrainingConfigRunSchema):
         leave=True,
         desc="Training status",
     ):
-        metrics_to_log: Dict[str, Any] = {
-            "train/learning_rate": schedulers[0].get_last_lr()
-        }
+        metrics_to_log: Dict[str, Any] = {"train/learning_rate": schedulers[0].get_last_lr()}
         # Collect data
         metrics_to_log.update(
             utils.collect_data(

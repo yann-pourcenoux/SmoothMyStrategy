@@ -16,9 +16,7 @@ def log_model(model: torch.nn.Module) -> None:
     """Save and log the model to W&B in the run directory."""
     # Ensure that a W&B run is active
     if wandb.run is None:
-        raise ValueError(
-            "W&B run is not initialized. Call wandb.init() before logging models."
-        )
+        raise ValueError("W&B run is not initialized. Call wandb.init() before logging models.")
 
     # Define the path within the W&B run directory
     policy_path = os.path.join(wandb.run.dir, "model.pth")
@@ -34,9 +32,7 @@ def log_df(df: pd.DataFrame, title: str) -> None:
     """Save and log a pandas DataFrame to W&B in the run directory."""
     # Ensure that a W&B run is active
     if wandb.run is None:
-        raise ValueError(
-            "W&B run is not initialized. Call wandb.init() before logging dataframes."
-        )
+        raise ValueError("W&B run is not initialized. Call wandb.init() before logging dataframes.")
 
     # Define the CSV path within the W&B run directory
     csv_path = os.path.join(wandb.run.dir, f"{title}.csv")

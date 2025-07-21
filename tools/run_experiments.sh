@@ -6,7 +6,7 @@ EXPERIMENTS_PER_BATCH=8
 
 for batch in $(seq 1 $TOTAL_BATCHES); do
     echo "=== Starting Batch $batch ==="
-    
+
     for experiment in $(seq 1 $EXPERIMENTS_PER_BATCH); do
         # Generate a random seed
         SEED=$RANDOM

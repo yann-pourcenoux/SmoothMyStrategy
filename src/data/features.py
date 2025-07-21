@@ -77,9 +77,7 @@ class FeatureGenerator:
         prices = data["close"]
         return (prices / prices.shift(shift)) - 1
 
-    def generate_features(
-        self, data: pd.DataFrame, feature_names: List[str]
-    ) -> pd.DataFrame:
+    def generate_features(self, data: pd.DataFrame, feature_names: List[str]) -> pd.DataFrame:
         """Generate all specified features from the input data.
 
         Args:

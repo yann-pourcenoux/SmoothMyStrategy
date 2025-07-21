@@ -83,9 +83,7 @@ class RLTrainingConfigSchema(BaseTrainingConfigSchema):
     """Configuration schema for the RL experiment."""
 
     collector: CollectorConfigSchema = field(default_factory=CollectorConfigSchema)
-    replay_buffer: ReplayBufferConfigSchema = field(
-        default_factory=ReplayBufferConfigSchema
-    )
+    replay_buffer: ReplayBufferConfigSchema = field(default_factory=ReplayBufferConfigSchema)
 
     loss: LossConfigSchema = field(default_factory=LossConfigSchema)
     optimizer: OptimizerConfigSchema = field(default_factory=OptimizerConfigSchema)

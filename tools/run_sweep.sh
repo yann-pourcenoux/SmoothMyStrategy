@@ -6,7 +6,7 @@
 
 # Number of sweeping agents
 NUM_SWEEP_AGENTS="$2"
-    
+
 for experiment in $(seq 1 $NUM_SWEEP_AGENTS); do
         echo "Running Sweeping agent $experiment"
         # Start of Selection

@@ -36,9 +36,7 @@ def train(
         # Sample from replay buffer
         sampled_tensordict = replay_buffer.sample()
         if sampled_tensordict.device != collector.env_device:
-            sampled_tensordict = sampled_tensordict.to(
-                collector.env_device, non_blocking=True
-            )
+            sampled_tensordict = sampled_tensordict.to(collector.env_device, non_blocking=True)
         else:
             sampled_tensordict = sampled_tensordict.clone()
         # Compute loss
@@ -62,9 +60,7 @@ def train(
         for scheduler in schedulers:
             scheduler.step()
 
-        losses_values[i] = loss_td.select(
-            "loss_actor", "loss_qvalue", "loss_alpha"
-        ).detach()
+        losses_values[i] = loss_td.select("loss_actor", "loss_qvalue", "loss_alpha").detach()
         # Update qnet_target params
         target_net_updater.step()
         # Update priority

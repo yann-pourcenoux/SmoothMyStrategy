@@ -1,0 +1,37 @@
+name: Lint
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read Python version
+        id: python-version
+        run: echo "version=$(cat .python-version | tr -d ' \n')" >> $GITHUB_OUTPUT
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ steps.python-version.outputs.version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Install dependencies
+        run: |
+          uv sync --dev
+
+      - name: Run style checks
+        run: |
+          uv run ruff check --no-fix src
+          uv run ruff format --check src
+          uv run isort --check src
+          uv run docformatter --black --check -r src

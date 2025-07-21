@@ -30,9 +30,7 @@ def load_data(
         data.set_index("date", inplace=True)
 
     # Extract tickers from the data
-    tickers = [
-        col.split("close_", 1)[1] for col in data.columns if col.startswith("close_")
-    ]
+    tickers = [col.split("close_", 1)[1] for col in data.columns if col.startswith("close_")]
 
     for ticker in tickers:
         prices = data[f"close_{ticker}"]
@@ -56,9 +54,7 @@ def load_data(
         data[f"weight_{ticker}"] = data[f"value_{ticker}"] / data["portfolio_value"]
 
     for ticker in tickers:
-        data[f"return_{ticker}"] = (
-            data[f"price_{ticker}"] / data[f"price_{ticker}"].iloc[0]
-        )
+        data[f"return_{ticker}"] = data[f"price_{ticker}"] / data[f"price_{ticker}"].iloc[0]
     data["portfolio_return"] = data["portfolio_value"] / data["portfolio_value"].iloc[0]
 
     return data, tickers
@@ -71,15 +67,11 @@ def display_returns(data: pd.DataFrame, tickers_to_show: list[str]) -> None:
         data (pd.DataFrame): DataFrame containing the data.
         tickers_to_show (list[str]): List of tickers to show returns for.
     """
-    columns_to_display = ["portfolio_return"] + [
-        f"return_{ticker}" for ticker in tickers_to_show
-    ]
+    columns_to_display = ["portfolio_return"] + [f"return_{ticker}" for ticker in tickers_to_show]
     st.line_chart(data[columns_to_display])
 
 
-def get_hex_colors_from_colormap(
-    num_colors: int, colormap_name: str = "viridis"
-) -> list[str]:
+def get_hex_colors_from_colormap(num_colors: int, colormap_name: str = "viridis") -> list[str]:
     """Get hex colors from a colormap.
 
     Args:
@@ -127,9 +119,7 @@ def display_buy_sell_signals(data: pd.DataFrame, tickers_to_show: list[str]) -> 
             .encode(
                 x=alt.X("date:T", title=None),
                 y=alt.Y("price:Q", title=None),
-                color=alt.condition(
-                    alt.datum.order > 0, alt.value("green"), alt.value("red")
-                ),
+                color=alt.condition(alt.datum.order > 0, alt.value("green"), alt.value("red")),
                 shape=alt.condition(
                     alt.datum.order > 0,
                     alt.value("triangle-up"),

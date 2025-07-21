@@ -21,9 +21,7 @@ def preprocess_data(
     Returns:
         pd.DataFrame: Preprocessed dataframe.
     """
-    dataframe_iterator = _add_technical_indicators(
-        stock_df_iterator, config.technical_indicators
-    )
+    dataframe_iterator = _add_technical_indicators(stock_df_iterator, config.technical_indicators)
 
     dataframe = merge_dataframes(dataframe_iterator)
 
@@ -86,9 +84,7 @@ def merge_dataframes(dataframe_iterator: Iterable[pd.DataFrame]) -> pd.DataFrame
     return dataframe
 
 
-def select_time_range(
-    dataframe: pd.DataFrame, start: str | None, end: str | None
-) -> pd.DataFrame:
+def select_time_range(dataframe: pd.DataFrame, start: str | None, end: str | None) -> pd.DataFrame:
     """Select time range of dataframe.
 
     Args:
