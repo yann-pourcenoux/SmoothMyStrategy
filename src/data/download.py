@@ -43,10 +43,7 @@ def download_tickers(tickers: list[str], data_path: str) -> None:
     tickers = tickers_data["Ticker"].unique()
 
     with Pool() as pool:
-        args = [
-            (ticker, tickers_data, data_path)
-            for ticker in tickers_data["Ticker"].unique()
-        ]
+        args = [(ticker, tickers_data, data_path) for ticker in tickers_data["Ticker"].unique()]
         list(
             tqdm(
                 pool.imap(save_ticker_data, args),
@@ -95,12 +92,8 @@ def _parse_args():
         nargs="+",
         metavar="files",
         type=str,
-        help="List of json files containing tickers. "
-        + "The files are separated by spaces.",
-        default=[
-            os.path.join(DATA_CONFIG_PATH, file)
-            for file in os.listdir(DATA_CONFIG_PATH)
-        ],
+        help="List of json files containing tickers. " + "The files are separated by spaces.",
+        default=[os.path.join(DATA_CONFIG_PATH, file) for file in os.listdir(DATA_CONFIG_PATH)],
     )
 
     return parser.parse_args()

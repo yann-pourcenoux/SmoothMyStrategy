@@ -101,9 +101,7 @@ def run_training(config: RLExperimentConfigSchema):
     )
 
     # Create replay buffer
-    replay_buffer = utils.make_replay_buffer(
-        config=config.replay_buffer, run_dir=wandb.run.dir
-    )
+    replay_buffer = utils.make_replay_buffer(config=config.replay_buffer, run_dir=wandb.run.dir)
 
     # Create optimizers
     model_optimizers = optimizers.make_sac_optimizer(
@@ -132,9 +130,7 @@ def run_training(config: RLExperimentConfigSchema):
         leave=True,
         desc="Training status",
     ):
-        metrics_to_log: Dict[str, Any] = {
-            "train/learning_rate": schedulers[0].get_last_lr()
-        }
+        metrics_to_log: Dict[str, Any] = {"train/learning_rate": schedulers[0].get_last_lr()}
         # Collect data
         metrics_to_log.update(
             utils.collect_data(

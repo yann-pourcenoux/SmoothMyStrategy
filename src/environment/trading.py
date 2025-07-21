@@ -24,9 +24,7 @@ class TradingEnv(EnvBase):
         seed: int | None = None,
         device: str = "cpu",
     ):
-        batch_size = (
-            torch.Size([config.batch_size]) if config.batch_size is not None else None
-        )
+        batch_size = torch.Size([config.batch_size]) if config.batch_size is not None else None
         super().__init__(device=device, batch_size=batch_size)
 
         self._config = config
@@ -34,9 +32,7 @@ class TradingEnv(EnvBase):
             data_container.get_env_data(config.start_date, config.end_date)
         )
         self._num_tickers = data_container.num_tickers
-        self.technical_indicators = (
-            data_container._preprocessing_config.technical_indicators
-        )
+        self.technical_indicators = data_container._preprocessing_config.technical_indicators
 
         # Set up
         self._day = torch.zeros((), dtype=torch.int32)
@@ -72,9 +68,7 @@ class TradingEnv(EnvBase):
                 )
             self.states_per_day.append(tensordict)
 
-    def _get_state_of_day(
-        self, day: int | torch.Tensor, batch_size: list[int] | torch.Size
-    ):
+    def _get_state_of_day(self, day: int | torch.Tensor, batch_size: list[int] | torch.Size):
         state = self.states_per_day[day].clone()
         if batch_size:
             for key, value in state.items():
@@ -121,9 +115,7 @@ class TradingEnv(EnvBase):
         sorted_indices = torch.argsort(actions, dim=-1, descending=False)
         for indices in torch.t(sorted_indices):
             indices = torch.unsqueeze(indices, dim=-1)
-            num_shares_owned = torch.gather(
-                tensordict["num_shares_owned"], dim=-1, index=indices
-            )
+            num_shares_owned = torch.gather(tensordict["num_shares_owned"], dim=-1, index=indices)
             price_share = torch.gather(tensordict["adj_close"], dim=-1, index=indices)
 
             with torch.no_grad():
@@ -187,8 +179,7 @@ class TradingEnv(EnvBase):
         }
         if self._config.random_initial_distribution is not None:
             distribution = (
-                torch.rand(**distribution_args)
-                * self._config.random_initial_distribution
+                torch.rand(**distribution_args) * self._config.random_initial_distribution
             )
             distribution = torch.softmax(distribution, dim=-1)
         else:
@@ -198,9 +189,7 @@ class TradingEnv(EnvBase):
         # Take only the distribution of shares
         distribution = distribution[..., :-1]
         # Compute the number of shares
-        num_shares_owned = torch.floor(
-            distribution * self._config.cash / out["adj_close"]
-        )
+        num_shares_owned = torch.floor(distribution * self._config.cash / out["adj_close"])
         # Update the cash amount
         cash = self._config.cash - torch.sum(
             num_shares_owned * out["adj_close"], dim=-1, keepdim=True

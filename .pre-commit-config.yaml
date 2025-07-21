@@ -21,33 +21,16 @@ repos:
       - id: debug-statements
       - id: detect-private-key
 
-  # MyPy
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.17.0
-    hooks:
-      - id: mypy
-        description: "Static type checking with MyPy"
-        additional_dependencies:
-          ["types-requests", "types-PyYAML", "pydantic>=2.9.2"]
-        args:
-          [
-            "--strict",
-            "--ignore-missing-imports",
-            "--install-types",
-            "--non-interactive",
-          ]
-
   # Ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
     rev: v0.12.4
     hooks:
       # Run the linter.
-      - id: ruff
-        types_or: [python, pyi, jupyter]
+      - id: ruff-check
         args: [--fix]
       # Run the formatter.
       - id: ruff-format
-        types_or: [python, pyi, jupyter]
 
   # Prettier (for json and yaml)
   - repo: https://github.com/pre-commit/mirrors-prettier

@@ -2,6 +2,7 @@
 
 import os
 
+from data.download import main as run_download_main
 from evaluation.run_evaluation import main as run_evaluation
 from rl.run_training import main as run_training
 
@@ -21,4 +22,16 @@ def run_visualization():
     os.system("streamlit run src/visualization/visualize.py")
 
 
-__all__ = ["format", "run_evaluation", "run_training", "run_visualization", "run_test"]
+def run_download():
+    """Run data download from Yahoo Finance."""
+    run_download_main()
+
+
+__all__ = [
+    "format",
+    "run_evaluation",
+    "run_training",
+    "run_visualization",
+    "run_test",
+    "run_download",
+]

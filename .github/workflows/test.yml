@@ -32,7 +32,7 @@ jobs:
       - name: Download test data
         run: |
           mkdir -p data
-          uv run python src/data/download.py --files src/data/cfg/test_data.json
+          uv run run_download --files src/data/cfg/test_data.json
 
       - name: Run tests
         run: |

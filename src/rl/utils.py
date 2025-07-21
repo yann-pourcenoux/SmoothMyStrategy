@@ -47,9 +47,7 @@ def make_replay_buffer(
     config: ReplayBufferConfigSchema, run_dir: str | None = None
 ) -> TensorDictPrioritizedReplayBuffer | TensorDictReplayBuffer:
     """Make replay buffer."""
-    scratch_dir = (
-        run_dir if config.buffer_scratch_dir is None else config.buffer_scratch_dir
-    )
+    scratch_dir = run_dir if config.buffer_scratch_dir is None else config.buffer_scratch_dir
     storage = LazyMemmapStorage(
         config.buffer_size,
         scratch_dir=scratch_dir,
@@ -143,9 +141,7 @@ def collect_data(
             # This is conceptually wrong but ok in practice since all the trajectories
             # have the same length
             average_reward_per_step = episode_rewards / episode_length
-            metrics_to_log["train/average_reward_per_step"].append(
-                average_reward_per_step
-            )
+            metrics_to_log["train/average_reward_per_step"].append(average_reward_per_step)
 
     sampling_time = time.time() - sampling_start
     metrics_to_log = {k: sum(v) / len(v) for k, v in metrics_to_log.items()}

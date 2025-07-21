@@ -36,6 +36,4 @@ class EvaluationConfigSchema:
         )
     )
     analysis: AnalysisConfigSchema = field(default_factory=AnalysisConfigSchema)
-    parameters: EvalParametersConfigSchema = field(
-        default_factory=EvalParametersConfigSchema
-    )
+    parameters: EvalParametersConfigSchema = field(default_factory=EvalParametersConfigSchema)
