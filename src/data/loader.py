@@ -34,7 +34,6 @@ def load_data(config: DataLoaderConfigSchema) -> Iterable[pd.DataFrame]:
 
         df = _select_and_rename_columns(df)
         df = _convert_to_date(df)
-        df = _add_day_of_week(df)
 
         df["ticker"] = ticker
         df.dropna(inplace=True)
@@ -76,18 +75,5 @@ def _convert_to_date(dataframe: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: dataframe with converted "Date" column.
     """
-    dataframe["date"] = dataframe.date.map(lambda x: pd.to_datetime(x).date())
-    return dataframe
-
-
-def _add_day_of_week(dataframe: pd.DataFrame) -> pd.DataFrame:
-    """Add "day" column to dataframe inplace.
-
-    Args:
-        dataframe (pd.DataFrame): dataframe to add "day" column for.
-
-    Returns:
-        pd.DataFrame: dataframe with added "day" column.
-    """
-    dataframe["day"] = dataframe.date.map(lambda x: x.weekday())
+    dataframe["date"] = pd.to_datetime(dataframe.date)
     return dataframe

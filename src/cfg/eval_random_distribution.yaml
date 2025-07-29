@@ -6,19 +6,22 @@ evaluation:
   loading:
     tickers:
       - AAPL
+      - MSFT
   preprocessing:
     technical_indicators:
       - log_return_0
     start_date: ${evaluation.environment.start_date}
     end_date: ${evaluation.environment.end_date}
   environment:
+    _target_: environment.utils.create_weight_action_env
     start_date: 2023-01-01
     end_date: 2025-01-01
     cash: 10000.0
+    monthly_cash: 1000.0
 
 run_parameters:
   seed: 0
   device: null
 
 policy:
-  algorithm_name: "BuyOneShareEveryDay"
+  algorithm_name: "BuyRandomDistribution"

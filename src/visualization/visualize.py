@@ -1,4 +1,20 @@
-"""Contain visualization module."""
+"""Contain visualization module.
+
+This module provides comprehensive visualization capabilities for portfolio trading analysis,
+including:
+
+- Portfolio and asset returns over time
+- Portfolio distribution across assets
+- Raw trading actions visualization and analysis
+- Buy/sell signals with executed trades
+- Comparison between intended actions and executed orders
+
+The action visualization functionality allows users to:
+1. View raw action values (intended trades) over time
+2. Analyze action statistics (mean, std, min, max, counts)
+3. Compare intended actions vs actual executed orders
+4. Understand when actions were constrained by cash or position limits
+"""
 
 import altair as alt
 import matplotlib.colors as mcolors
@@ -8,6 +24,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 import streamlit.components.v1 as components
+
+from evaluation.metrics import compute_daily_returns, compute_portfolio_value
 
 
 def load_data(
@@ -34,6 +52,7 @@ def load_data(
 
     for ticker in tickers:
         prices = data[f"close_{ticker}"]
+        # Keep simple price returns for individual ticker visualization
         returns = prices / prices.shift(1)
         shares = data[f"num_shares_owned_{ticker}"]
         orders = shares.diff()
@@ -46,16 +65,22 @@ def load_data(
         data[f"value_{ticker}"] = values
 
     data["value_cash"] = data["cash"]
-    data["portfolio_value"] = (
-        sum(data[f"value_{ticker}"] for ticker in tickers) + data["value_cash"]
-    )
+
+    # Use metrics function for proper portfolio value calculation
+    data["portfolio_value"] = compute_portfolio_value(data)
 
     for ticker in tickers + ["cash"]:
         data[f"weight_{ticker}"] = data[f"value_{ticker}"] / data["portfolio_value"]
 
+    # Keep simple cumulative returns for individual ticker visualization
     for ticker in tickers:
         data[f"return_{ticker}"] = data[f"price_{ticker}"] / data[f"price_{ticker}"].iloc[0]
-    data["portfolio_return"] = data["portfolio_value"] / data["portfolio_value"].iloc[0]
+
+    # Use metrics function for proper portfolio daily returns, then compute cumulative
+    portfolio_daily_returns = compute_daily_returns(data)
+    data["portfolio_daily_returns"] = portfolio_daily_returns
+    # Calculate cumulative returns from daily returns: (1 + r1) * (1 + r2) * ... - 1
+    data["portfolio_return"] = (1 + portfolio_daily_returns).cumprod()
 
     return data, tickers
 
@@ -133,6 +158,93 @@ def display_buy_sell_signals(data: pd.DataFrame, tickers_to_show: list[str]) -> 
     st.altair_chart(chart, use_container_width=True)
 
 
+def display_actions(data: pd.DataFrame, tickers_to_show: list[str]) -> None:
+    """Display the raw actions (intended trades) for the selected tickers over time.
+
+    Args:
+        data (pd.DataFrame): DataFrame containing the data.
+        tickers_to_show (list[str]): List of tickers to show actions for.
+    """
+    action_columns = [f"action_{ticker}" for ticker in tickers_to_show]
+
+    # Check if action columns exist in the data
+    available_action_columns = [col for col in action_columns if col in data.columns]
+
+    if not available_action_columns:
+        st.warning("No action data available in the dataset.")
+        return
+
+    # Create tabs for different views
+    tab1, tab2 = st.tabs(["Action Values", "Action vs Executed Comparison"])
+
+    with tab1:
+        # Create the chart data
+        chart_data = data[available_action_columns].copy()
+
+        # Rename columns for better display
+        chart_data.columns = [col.replace("action_", "") for col in chart_data.columns]
+
+        st.line_chart(chart_data)
+
+        # Add some statistics
+        st.write("**Action Statistics:**")
+        stats_data = {}
+        for ticker in tickers_to_show:
+            action_col = f"action_{ticker}"
+            if action_col in data.columns:
+                actions = data[action_col]
+                stats_data[ticker] = {
+                    "Mean": f"{actions.mean():.4f}",
+                    "Std": f"{actions.std():.4f}",
+                    "Min": f"{actions.min():.4f}",
+                    "Max": f"{actions.max():.4f}",
+                    "Buy Actions": f"{(actions > 0).sum()}",
+                    "Sell Actions": f"{(actions < 0).sum()}",
+                    "Hold Actions": f"{(actions == 0).sum()}",
+                }
+
+        if stats_data:
+            stats_df = pd.DataFrame(stats_data).T
+            st.dataframe(stats_df)
+
+    with tab2:
+        # Compare actions vs executed orders
+        st.write("**Comparison: Intended Actions vs Executed Orders**")
+
+        for ticker in tickers_to_show:
+            action_col = f"action_{ticker}"
+            order_col = f"order_{ticker}"
+
+            if action_col in data.columns and order_col in data.columns:
+                st.write(f"**{ticker}**")
+
+                # Create comparison chart
+                comparison_data = pd.DataFrame(
+                    {
+                        f"Intended ({ticker})": data[action_col],
+                        f"Executed ({ticker})": data[order_col],
+                    }
+                )
+
+                st.line_chart(comparison_data)
+
+                # Show correlation and statistics
+                correlation = data[action_col].corr(data[order_col])
+                st.write(f"Correlation between intended and executed: {correlation:.4f}")
+
+                # Show cases where actions were constrained
+                constrained = data[action_col] != data[order_col]
+                st.write(
+                    f"Actions constrained: {constrained.sum()} out of {len(data)} days ({100 * constrained.mean():.1f}%)"
+                )
+            else:
+                st.write(f"Missing data for {ticker}")
+                if action_col not in data.columns:
+                    st.write(f"- No action data ({action_col})")
+                if order_col not in data.columns:
+                    st.write(f"- No order data ({order_col})")
+
+
 def plot_portfolio_distribution(df: pd.DataFrame) -> go.Figure:
     """Plot the distribution of the portfolio in different assets over time.
 
@@ -178,6 +290,15 @@ def visualize(
     st.subheader("Portfolio Distribution Over Time")
     fig = plot_portfolio_distribution(data)
     st.plotly_chart(fig, use_container_width=True)
+
+    st.subheader("Raw Actions Over Time")
+    tickers_to_show_actions = st.multiselect(
+        "Select tickers to show actions for:",
+        all_tickers,
+        default=all_tickers,
+        key="tickers_to_show_actions",
+    )
+    display_actions(data, tickers_to_show_actions)
 
     st.subheader("Asset Returns Over Time with Buy/Sell Signals")
     tickers_to_show_signals = st.multiselect(

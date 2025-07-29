@@ -1,10 +1,10 @@
-"""Algorithm that buys one share everyday."""
+"""Algorithm that buys a random distribution of shares."""
 
 import torch
 from torchrl.modules import SafeModule
 
 
-class BuySharesModule(torch.nn.Module):
+class BuyRandomDistributionModule(torch.nn.Module):
     """Module that implements a simple buy-shares strategy."""
 
     def __init__(self):
@@ -20,8 +20,12 @@ class BuySharesModule(torch.nn.Module):
         Returns:
             Tensor containing action values (buy one share for each ticker).
         """
-        return torch.ones_like(num_shares_owned)
+        raw_distribution = torch.rand_like(num_shares_owned)
+        distribution = raw_distribution / torch.sum(raw_distribution, dim=-1, keepdim=True)
+        return distribution
 
 
-def BuySharesPolicy():
-    return SafeModule(module=BuySharesModule(), in_keys=["num_shares_owned"], out_keys=["action"])
+def BuyRandomDistributionPolicy():
+    return SafeModule(
+        module=BuyRandomDistributionModule(), in_keys=["num_shares_owned"], out_keys=["action"]
+    )

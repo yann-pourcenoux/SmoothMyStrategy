@@ -21,6 +21,7 @@ training:
     start_date: ${training.environment.start_date}
     end_date: ${training.environment.end_date}
   environment:
+    _target_: environment.utils.create_signal_action_env
     cash: 1000.0
     start_date: 2021-01-01
     end_date: 2023-01-01
@@ -51,6 +52,7 @@ evaluation:
     start_date: ${evaluation.environment.start_date}
     end_date: ${evaluation.environment.end_date}
   environment:
+    _target_: environment.utils.create_signal_action_env
     # TODO: Change this
     start_date: ${training.environment.start_date}
     end_date: ${training.environment.end_date}
