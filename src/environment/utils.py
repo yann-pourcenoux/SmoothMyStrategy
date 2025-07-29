@@ -1,7 +1,7 @@
 """Module to define the utilities for the investment environment."""
 
-from torchrl.envs import CatTensors, Compose, DoubleToFloat, EnvBase, TransformedEnv
-from torchrl.envs.transforms import InitTracker, RewardSum, StepCounter, VecNormV2
+from torchrl.envs import Compose, DoubleToFloat, EnvBase, TransformedEnv
+from torchrl.envs.transforms import InitTracker, RewardSum, Stack, StepCounter
 
 from config.environment import EnvironmentConfigSchema
 from data.container import DataContainer
@@ -73,13 +73,7 @@ def _apply_transform_observation(env: BaseTradingEnv) -> TransformedEnv:
     transformed_env = TransformedEnv(
         env=env,
         transform=Compose(
-            CatTensors(
-                in_keys=env.technical_indicators,
-                dim=-1,
-                out_key="observation",
-                del_keys=False,
-            ),
-            VecNormV2(in_keys=["observation"]),
+            Stack(in_keys=env.technical_indicators, out_key="observation"),
         ),
         device=env.device,
     )

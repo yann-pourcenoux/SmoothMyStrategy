@@ -21,6 +21,8 @@ from config.rl import RLPolicyConfigSchema
 from config.run import EvaluationRunConfigSchema
 from environment.utils import apply_transforms
 from quant.buy_random_distribution import BuyRandomDistributionPolicy
+from quant.max_sharpe_ratio import MaxSharpeRatioPortfolioPolicy
+from quant.minimum_variance_portfolio import MinimumVariancePortfolioPolicy
 
 
 @hydra.main(version_base=None, config_path="../cfg", config_name="evaluation")
@@ -43,6 +45,10 @@ def load_policy(policy_config: BasePolicyConfigSchema):
         # Create the quant algorithm based on configuration
         if policy_config.algorithm_name == "BuyRandomDistribution":
             return BuyRandomDistributionPolicy()
+        elif policy_config.algorithm_name == "MinimumVariancePortfolio":
+            return MinimumVariancePortfolioPolicy()
+        elif policy_config.algorithm_name == "MaxSharpeRatioPortfolio":
+            return MaxSharpeRatioPortfolioPolicy()
         else:
             # Add more algorithm types here as needed
             raise ValueError(f"Unknown quant algorithm: {policy_config.algorithm_name}")

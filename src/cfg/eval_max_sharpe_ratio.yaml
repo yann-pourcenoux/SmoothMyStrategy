@@ -1,0 +1,47 @@
+defaults:
+  - quant_evaluation
+  - technical_indicators: one_year_return
+  - _self_
+
+evaluation:
+  loading:
+    tickers:
+      - AAPL
+      - NVDA
+      - MSFT
+      - AMZN
+      - GOOGL
+      - AVGO
+      - TSLA
+      - GOOG
+      - JPM
+      - LLY
+      - V
+      - XOM
+      - COST
+      - MA
+      - UNH
+      - NFLX
+      - WMT
+      - PG
+      - JNJ
+      - HD
+      - ABBV
+      - BAC
+      - CRM
+  preprocessing:
+    start_date: ${evaluation.environment.start_date}
+    end_date: ${evaluation.environment.end_date}
+  environment:
+    _target_: environment.utils.create_weight_action_env
+    start_date: 2023-01-01
+    end_date: 2025-01-01
+    cash: 10000.0
+    monthly_cash: 1000.0
+
+run_parameters:
+  seed: 0
+  device: null
+
+policy:
+  algorithm_name: "MaxSharpeRatioPortfolio"

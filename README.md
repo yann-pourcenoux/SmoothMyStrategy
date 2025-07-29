@@ -12,7 +12,7 @@ The project combines both methodologies to provide comprehensive portfolio manag
 
 ## Project Structure
 
-```
+```text
 finance/
 ├── src/                    # Source code
 │   ├── cfg/               # Configuration files (YAML)
