@@ -10,8 +10,9 @@ from environment.base import BaseTradingEnv
 class WeightActionEnv(BaseTradingEnv):
     """Class to define the weight-based action environment.
 
-    Input actions represent portfolio weights (distribution) rather than direct trading signals.
-    The actions are normalized weights that determine how to allocate available cash across assets.
+    Input actions represent portfolio weights (distribution) rather than direct trading
+    signals. The actions are normalized weights that determine how to allocate available
+    cash across assets.
     """
 
     batch_locked: bool = False

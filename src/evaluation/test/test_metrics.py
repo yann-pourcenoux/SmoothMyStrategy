@@ -1,8 +1,8 @@
 """Test suite for metrics.py module.
 
-This module tests the portfolio analysis functions including portfolio value calculation,
-daily returns computation, and time-weighted return calculation under various scenarios
-including edge cases.
+This module tests the portfolio analysis functions including portfolio value
+calculation, daily returns computation, and time-weighted return calculation under
+various scenarios including edge cases.
 """
 
 import numpy as np

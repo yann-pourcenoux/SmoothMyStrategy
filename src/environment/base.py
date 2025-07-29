@@ -16,8 +16,8 @@ from data.container import DataContainer
 class BaseTradingEnv(EnvBase):
     """Class to define the base trading environment.
 
-    The actions are supposed to a number of shares to buy or sell.
-    It is on the child class to define the action space and define the actions mapping.
+    The actions are supposed to a number of shares to buy or sell. It is on the child
+    class to define the action space and define the actions mapping.
     """
 
     batch_locked: bool = False

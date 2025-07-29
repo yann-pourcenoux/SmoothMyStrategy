@@ -14,7 +14,8 @@ class TestWeightActionEnv(BaseTestEnvironment, unittest.TestCase):
     environment_class = WeightActionEnv
 
     def test_action_one_ticker(self):
-        """Test when a action has to be performed on an env with one ticker and artificial weights."""
+        """Test when a action has to be performed on an env with one ticker and
+        artificial weights."""
         batch_size = 2
         fake_divider = 2
         env = create_env(self.environment_class, batch_size=batch_size, tickers=["AAPL"])
