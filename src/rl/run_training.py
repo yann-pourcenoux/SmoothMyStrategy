@@ -13,7 +13,6 @@ import wandb
 
 import data.container
 import data.preprocessing
-import environment.trading
 import evaluation.evaluate as evaluate
 import logger as logger
 import rl.agents as agents
@@ -22,7 +21,7 @@ import rl.optimizers as optimizers
 import rl.train as train
 import rl.utils as utils
 from config.run import TrainingConfigRunSchema
-from environment.trading import TradingEnv
+from environment.utils import apply_transforms
 
 
 @hydra.main(version_base=None, config_path="../cfg", config_name="rl_experiment")
@@ -66,17 +65,17 @@ def run_training(config: TrainingConfigRunSchema):
     )
 
     # Create environments
-    train_env = environment.trading.apply_transforms(
-        env=TradingEnv(
-            config=config.training.environment,
+    train_env = apply_transforms(
+        env=hydra.utils.instantiate(
+            config.training.environment,
             data_container=train_data_container,
             seed=config.run_parameters.seed,
             device=device,
         ),
     )
-    eval_env = environment.trading.apply_transforms(
-        env=TradingEnv(
-            config=config.evaluation.environment,
+    eval_env = apply_transforms(
+        env=hydra.utils.instantiate(
+            config.evaluation.environment,
             data_container=eval_data_container,
             seed=config.run_parameters.seed,
             device=device,

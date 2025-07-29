@@ -46,7 +46,6 @@ finance/
 ### Development Directories
 
 - **.cursor/**: Contains Cursor IDE specific configurations and settings
-- **.devcontainer/**: VS Code development container configuration for consistent development environments
 
 ## Setup
 

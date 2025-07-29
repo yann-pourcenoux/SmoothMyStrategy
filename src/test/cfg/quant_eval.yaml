@@ -14,6 +14,7 @@ evaluation:
     start_date: ${evaluation.environment.start_date}
     end_date: ${evaluation.environment.end_date}
   environment:
+    _target_: environment.utils.create_signal_action_env
     start_date: 2021-01-01
     end_date: 2023-01-01
     cash: 100000.0
@@ -23,7 +24,7 @@ run_parameters:
   device: null
 
 policy:
-  algorithm_name: "BuyOneShareEveryDay"
+  algorithm_name: "BuyRandomDistribution"
 
 logging:
   online: False

@@ -1,19 +1,24 @@
 """Module to define the environment to trade stocks."""
 
+from abc import abstractmethod
+
 import numpy as np
 import pandas as pd
 import torch
 from tensordict import TensorDict
-from torchrl.data import Bounded, Composite, Unbounded
-from torchrl.envs import CatTensors, Compose, DoubleToFloat, EnvBase, TransformedEnv
-from torchrl.envs.transforms import InitTracker, RewardSum, StepCounter, VecNorm
+from torchrl.data import Composite, Unbounded
+from torchrl.envs import EnvBase
 
 from config.environment import EnvironmentConfigSchema
 from data.container import DataContainer
 
 
-class TradingEnv(EnvBase):
-    """Class to define the trading environment."""
+class BaseTradingEnv(EnvBase):
+    """Class to define the base trading environment.
+
+    The actions are supposed to a number of shares to buy or sell. It is on the child
+    class to define the action space and define the actions mapping.
+    """
 
     batch_locked: bool = False
 
@@ -45,6 +50,14 @@ class TradingEnv(EnvBase):
             seed = torch.empty((), dtype=torch.int32).random_().item()
         self._set_seed(seed)
 
+    @abstractmethod
+    def _convert_actions(self, tensordict: TensorDict):
+        pass
+
+    @abstractmethod
+    def _get_action_spec(self):
+        pass
+
     # TODO(@yann.pourcenoux): Maybe this could be improved
     def _convert_to_list_tensors(self, dataframe: pd.DataFrame):
         self.column_names = dataframe.columns
@@ -61,11 +74,14 @@ class TradingEnv(EnvBase):
                     data = data.values
                 else:
                     data = np.array([data])
-                tensordict[column] = torch.tensor(
-                    data=data,
-                    dtype=torch.float32,
-                    device=self.device,
-                )
+
+                if data.dtype in [np.float32, np.float64]:
+                    data = data.astype(np.float32)
+                elif data.dtype in [np.int32, np.int64]:
+                    data = data.astype(np.int32)
+
+                tensordict[column] = torch.tensor(data=data, device=self.device)
+
             self.states_per_day.append(tensordict)
 
     def _get_state_of_day(self, day: int | torch.Tensor, batch_size: list[int] | torch.Size):
@@ -78,29 +94,21 @@ class TradingEnv(EnvBase):
 
     def _step(self, tensordict: TensorDict):
         """Perform the step of the environment."""
-        tensordict["action"] = self._process_actions(tensordict)
         return self._perform_trading_action(tensordict)
-
-    def _process_actions(self, tensordict: TensorDict):
-        return tensordict["action"]
-
-    def _inv_process_actions(self, tensordict: TensorDict):
-        return tensordict["action"]
-
-    def _get_action_spec(self):
-        return Bounded(
-            shape=self.batch_size + (self._num_tickers,),
-            low=-100,
-            high=100,
-            device=self.device,
-        )
 
     def _perform_trading_action(self, tensordict: TensorDict):
         """Perform the trading action."""
         # Check if done, it will be used at the bottom
         done = self._day == self._num_time_steps - 1
 
-        actions = tensordict["action"]
+        condition = tensordict["is_first_day_of_month"][..., 0:1]  # Keep the last dimension
+        tensordict["deposit"] = torch.where(condition, self._config.monthly_cash, 0)
+
+        tensordict["cash"] = torch.where(
+            condition,
+            tensordict["cash"] + self._config.monthly_cash,
+            tensordict["cash"],
+        )
 
         # Compute portfolio value
         portfolio_value = tensordict["cash"] + torch.sum(
@@ -112,6 +120,8 @@ class TradingEnv(EnvBase):
         new_num_shares_owned = tensordict["num_shares_owned"].clone()
         new_cash = tensordict["cash"].clone()
 
+        actions = self._convert_actions(tensordict)["action"]
+
         sorted_indices = torch.argsort(actions, dim=-1, descending=False)
         for indices in torch.t(sorted_indices):
             indices = torch.unsqueeze(indices, dim=-1)
@@ -120,7 +130,7 @@ class TradingEnv(EnvBase):
 
             with torch.no_grad():
                 min_num_shares_action = -num_shares_owned
-                max_num_shares_action = new_cash // price_share
+                max_num_shares_action = new_cash / price_share
 
             num_shares_action = torch.clamp(
                 input=torch.gather(actions, dim=-1, index=indices),
@@ -139,6 +149,7 @@ class TradingEnv(EnvBase):
                 **self._get_state_of_day(self._day, tensordict.shape),
                 "cash": new_cash,
                 "num_shares_owned": new_num_shares_owned,
+                "deposit": tensordict["deposit"],
             },
             batch_size=tensordict.shape,
             device=self.device,
@@ -196,6 +207,7 @@ class TradingEnv(EnvBase):
         )
 
         out["cash"] = cash
+        out["deposit"] = torch.ones_like(cash) * self._config.cash
         out["num_shares_owned"] = num_shares_owned
         return out
 
@@ -204,10 +216,12 @@ class TradingEnv(EnvBase):
         self.rng = torch.manual_seed(seed)
 
     def _make_spec(self):
+        # Determine dtypes from the first day's data
+        sample_state = self.states_per_day[0]
         state = {
             key: Unbounded(
                 shape=self.batch_size + (self._num_tickers,),
-                dtype=torch.float32,
+                dtype=sample_state[key].dtype,
                 device=self.device,
             )
             for key in self.column_names
@@ -215,6 +229,10 @@ class TradingEnv(EnvBase):
         self.observation_spec = Composite(
             {
                 "cash": Unbounded(
+                    shape=self.batch_size + (1,),
+                    device=self.device,
+                ),
+                "deposit": Unbounded(
                     shape=self.batch_size + (1,),
                     device=self.device,
                 ),
@@ -243,70 +261,25 @@ class TradingEnv(EnvBase):
         dates = self._dates[:num_steps]
         tickers = self._tickers
 
-        close = rollout["adj_close"]
-        num_shares_owned = rollout["num_shares_owned"]
-        cash = rollout["cash"]
-        actions = rollout["action"]
-        portfolio_value = torch.squeeze(
-            cash + torch.sum(close * num_shares_owned, dim=-1, keepdim=True),
-            axis=-1,
-        )
+        # Take only the value for the first batch
+        close = rollout["adj_close"].cpu().numpy()[0]
+        num_shares_owned = rollout["num_shares_owned"].cpu().numpy()[0]
+        actions = rollout["action"].cpu().numpy()[0]
 
-        # Convert the tensors to cpu().numpy()
-        close = close.cpu().numpy()[0]
-        num_shares_owned = num_shares_owned.cpu().numpy()[0]
-        cash = cash.cpu().numpy()[0, :, 0]
-        portfolio_value = portfolio_value.cpu().numpy()[0]
-        actions = actions.cpu().numpy()[0]
+        cash = rollout["cash"].cpu().numpy()[0, :, 0]
+        deposit = rollout["deposit"].cpu().numpy()[0, :, 0]
 
-        data = {"date": dates, "cash": cash, "portfolio_value": portfolio_value}
+        data = {
+            "date": dates,
+            "cash": cash,
+            "deposit": deposit,
+        }
         for i, ticker in enumerate(tickers):
             data[f"action_{ticker}"] = actions[:, i]
             data[f"close_{ticker}"] = close[:, i]
             data[f"num_shares_owned_{ticker}"] = num_shares_owned[:, i]
 
         df = pd.DataFrame(data)
-        df["daily_returns"] = df["portfolio_value"].pct_change().fillna(0)
         df.set_index("date", inplace=True)
         df.index = pd.to_datetime(df.index)
         return df
-
-
-def _apply_transform_observation(env: TradingEnv) -> TransformedEnv:
-    """Concatenates the columns into an observation key."""
-    transformed_env = TransformedEnv(
-        env=env,
-        transform=Compose(
-            CatTensors(
-                in_keys=env.technical_indicators,
-                dim=-1,
-                out_key="observation",
-                del_keys=False,
-            ),
-            VecNorm(in_keys=["observation"]),
-        ),
-        device=env.device,
-    )
-    return transformed_env
-
-
-def _apply_transforms(env: EnvBase) -> TransformedEnv:
-    """Apply the necessary transforms to train using SAC."""
-    transformed_env = TransformedEnv(
-        env=env,
-        transform=Compose(
-            InitTracker(),
-            StepCounter(),
-            DoubleToFloat(),
-            RewardSum(),
-        ),
-        device=env.device,
-    )
-    return transformed_env
-
-
-def apply_transforms(env: EnvBase) -> TransformedEnv:
-    """Get the environment to train using SAC."""
-    env = _apply_transform_observation(env)
-    env = _apply_transforms(env)
-    return env

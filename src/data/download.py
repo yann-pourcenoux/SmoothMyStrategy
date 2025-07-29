@@ -36,7 +36,7 @@ def download_tickers(tickers: list[str], data_path: str) -> None:
         tickers (list[str]): List of tickers to donwload.
         data_path (str): Path to save the data to.
     """
-    tickers_data = yf.download(tickers, period="max", auto_adjust=False)
+    tickers_data = yf.download(tickers, period="max", auto_adjust=False)  # , repair=True)
     tickers_data = tickers_data.stack(level=1).reset_index()
 
     # Some ticker donwloading may fail for various reasons

@@ -11,7 +11,6 @@ from omegaconf import DictConfig
 
 import data.container
 import data.preprocessing
-import environment.trading
 import evaluation.analysis as analysis
 import evaluation.evaluate as evaluate
 import logger as logger
@@ -20,8 +19,8 @@ from config.base import BasePolicyConfigSchema
 from config.quant import QuantPolicyConfigSchema
 from config.rl import RLPolicyConfigSchema
 from config.run import EvaluationRunConfigSchema
-from environment.trading import TradingEnv
-from quant.buy_everyday import BuySharesPolicy
+from environment.utils import apply_transforms
+from quant.buy_random_distribution import BuyRandomDistributionPolicy
 
 
 @hydra.main(version_base=None, config_path="../cfg", config_name="evaluation")
@@ -42,8 +41,8 @@ def load_policy(policy_config: BasePolicyConfigSchema):
     # Handle quant models
     elif isinstance(policy_config, QuantPolicyConfigSchema):
         # Create the quant algorithm based on configuration
-        if policy_config.algorithm_name == "BuyOneShareEveryDay":
-            return BuySharesPolicy()
+        if policy_config.algorithm_name == "BuyRandomDistribution":
+            return BuyRandomDistributionPolicy()
         else:
             # Add more algorithm types here as needed
             raise ValueError(f"Unknown quant algorithm: {policy_config.algorithm_name}")
@@ -77,9 +76,9 @@ def run_testing(
         preprocessing_config=config.evaluation.preprocessing,
     )
 
-    eval_env = environment.trading.apply_transforms(
-        env=TradingEnv(
-            config=config.evaluation.environment,
+    eval_env = apply_transforms(
+        env=hydra.utils.instantiate(
+            config.evaluation.environment,
             data_container=data_container,
             seed=config.run_parameters.seed,
             device=device,

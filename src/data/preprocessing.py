@@ -24,6 +24,7 @@ def preprocess_data(
     dataframe_iterator = _add_technical_indicators(stock_df_iterator, config.technical_indicators)
 
     dataframe = merge_dataframes(dataframe_iterator)
+    dataframe = _add_date_features(dataframe)
 
     dataframe = select_time_range(dataframe, config.start_date, config.end_date)
     dataframe = clean_data(dataframe)
@@ -53,6 +54,26 @@ def _add_technical_indicators(
         df.dropna(inplace=True)
 
         yield df
+
+
+def _add_date_features(dataframe: pd.DataFrame) -> pd.DataFrame:
+    """Generate the date features.
+
+    Args:
+        data: DataFrame containing price data
+
+    Returns:
+        DataFrame containing the date features
+    """
+    dataframe["day_of_week"] = dataframe["date"].dt.dayofweek
+    dataframe["day_of_month"] = dataframe["date"].dt.day
+    dataframe["day_of_year"] = dataframe["date"].dt.dayofyear
+    dataframe["month_of_year"] = dataframe["date"].dt.month
+    dataframe["is_first_day_of_month"] = dataframe["month_of_year"] != dataframe[
+        "month_of_year"
+    ].shift(1)
+
+    return dataframe
 
 
 def reset_index(dataframe: pd.DataFrame) -> pd.DataFrame:
@@ -96,10 +117,10 @@ def select_time_range(dataframe: pd.DataFrame, start: str | None, end: str | Non
         pd.DataFrame: dataframe with selected time range.
     """
     if start is not None:
-        dataframe = dataframe[dataframe.date >= pd.to_datetime(start).date()]
+        dataframe = dataframe[dataframe.date.dt.date >= pd.to_datetime(start).date()]
 
     if end is not None:
-        dataframe = dataframe[dataframe.date < pd.to_datetime(end).date()]
+        dataframe = dataframe[dataframe.date.dt.date < pd.to_datetime(end).date()]
 
     return dataframe
 

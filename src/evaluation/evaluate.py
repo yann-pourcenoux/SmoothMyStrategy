@@ -13,7 +13,8 @@ from torchrl.envs.utils import ExplorationType, set_exploration_type
 from torchrl.modules import ProbabilisticActor
 
 from config.evaluation import EvaluationConfigSchema
-from environment.trading import TradingEnv
+from environment.base import BaseTradingEnv
+from evaluation.metrics import compute_daily_returns
 
 
 def rollout(
@@ -75,14 +76,13 @@ def compute_eval_metrics(df: pd.DataFrame) -> Dict[str, float]:
     daily_returns = df["daily_returns"]
     metrics_to_log = {
         "eval/sharpe_ratio": qs.stats.sharpe(daily_returns),
-        "eval/calmar_ratio": qs.stats.calmar(daily_returns),
     }
 
     return metrics_to_log
 
 
 def evaluate(
-    eval_env: TradingEnv,
+    eval_env: BaseTradingEnv,
     policy: Callable | torch.nn.Module,
     config: EvaluationConfigSchema,
 ) -> tuple[Dict[str, float], pd.DataFrame]:
@@ -101,6 +101,7 @@ def evaluate(
     eval_time = time.time() - eval_start
 
     eval_df = eval_env.process_rollout(eval_rollout)
+    eval_df["daily_returns"] = compute_daily_returns(eval_df)
 
     metrics_to_log = {"timer/eval/time": eval_time}
     metrics_to_log.update(compute_rl_eval_metrics(eval_rollout))
