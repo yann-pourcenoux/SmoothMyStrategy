@@ -9,7 +9,14 @@ from rl.run_training import main as run_training
 
 def format():
     """Format the code using ruff."""
-    os.system("bash tools/format.sh")
+    os.system(
+        """
+        uv run ruff check --fix .
+        uv run ruff format .
+        uv run isort .
+        uv run docformatter --black -i -r .
+        """
+    )
 
 
 def run_test():
